@@ -55,6 +55,28 @@ CarBudget/
 5. API at `http://localhost/api`
 6. Swagger docs at `http://localhost/swagger`
 
+#### Customizing Ports with Environment Variables
+
+Create a `.env` file in the project root (copy from `.env.example`):
+
+```
+WEB_PORT=3000
+API_PORT=8080
+```
+
+Then run:
+```powershell
+docker-compose up --build
+```
+
+The app will now run on:
+- Web UI: `http://localhost:3000`
+- API: `http://localhost:3000/api` (proxied through nginx)
+
+**Available Environment Variables:**
+- `WEB_PORT` - Port for the web UI (default: 80)
+- `API_PORT` - Port for the backend API (default: 5000)
+
 To run in the background:
 ```powershell
 docker-compose up -d
