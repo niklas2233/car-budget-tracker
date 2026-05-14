@@ -1,0 +1,37 @@
+# Build outputs
+bin/
+obj/
+dist/
+build/
+*.dll
+*.exe
+*.pdb
+
+# Node/npm
+node_modules/
+npm-debug.log
+yarn-error.log
+.env.local
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temp files
+*.tmp
+*.temp
+.cache/
+
+# OS
+Thumbs.db
+.DS_Store

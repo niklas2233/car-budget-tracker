@@ -1,0 +1,165 @@
+:root {
+  --bg-page: #f5f6fa;
+  --bg-card: #ffffff;
+  --bg-stat: #f8f9fa;
+  --text-primary: #2c3e50;
+  --text-secondary: #666;
+  --text-muted: #888;
+  --border-color: #ddd;
+  --border-subtle: #f0f0f0;
+  --input-bg: #ffffff;
+  --shadow: rgba(0,0,0,0.1);
+  --shadow-hover: rgba(0,0,0,0.15);
+}
+
+[data-theme="dark"] {
+  --bg-page: #1a1d23;
+  --bg-card: #252830;
+  --bg-stat: #2e3240;
+  --text-primary: #e8eaf0;
+  --text-secondary: #a0a8b8;
+  --text-muted: #707888;
+  --border-color: #3a3f50;
+  --border-subtle: #2e3240;
+  --input-bg: #2e3240;
+  --shadow: rgba(0,0,0,0.4);
+  --shadow-hover: rgba(0,0,0,0.5);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  transition: background 0.2s, color 0.2s;
+}
+
+.App {
+  min-height: 100vh;
+}
+
+.App-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.App-home-link {
+  color: inherit;
+  text-decoration: none;
+  display: block;
+}
+
+.App-home-link:hover {
+  opacity: 0.95;
+}
+
+.App-header h1 {
+  margin: 0 0 4px 0;
+  font-size: 2em;
+}
+
+.App-header p {
+  margin: 0;
+  font-size: 1em;
+  opacity: 0.9;
+}
+
+.dark-mode-toggle {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9em;
+  white-space: nowrap;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.dark-mode-toggle:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+main {
+  padding: 20px;
+}
+
+/* color picker dark mode */
+[data-theme="dark"] .color-trigger {
+  background: #2e3240 !important;
+  color: #e8eaf0 !important;
+  border-color: #3a3f50 !important;
+}
+
+[data-theme="dark"] .color-trigger:hover {
+  background: #1a1d23 !important;
+}
+
+[data-theme="dark"] .color-preview-value {
+  color: #a0a8b8;
+}
+
+/* react-datepicker dark mode */
+[data-theme="dark"] .react-datepicker-wrapper,
+[data-theme="dark"] .react-datepicker__input-container,
+[data-theme="dark"] .react-datepicker__input-container input {
+  background: var(--input-bg);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .react-datepicker {
+  background: #2e3240;
+  border-color: #3a3f50;
+  color: #e8eaf0;
+}
+
+[data-theme="dark"] .react-datepicker__header {
+  background: #252830;
+  border-bottom-color: #3a3f50;
+}
+
+[data-theme="dark"] .react-datepicker__current-month,
+[data-theme="dark"] .react-datepicker__day-name,
+[data-theme="dark"] .react-datepicker__day {
+  color: #e8eaf0;
+}
+
+[data-theme="dark"] .react-datepicker__day:hover {
+  background: #3a3f50;
+}
+
+[data-theme="dark"] .react-datepicker__day--selected {
+  background: #667eea;
+  color: white;
+}
+
+[data-theme="dark"] .react-datepicker__day--disabled {
+  color: #505870;
+}
+
+[data-theme="dark"] .react-datepicker__navigation-icon::before {
+  border-color: #a0a8b8;
+}
+
+[data-theme="dark"] .react-datepicker__month-select,
+[data-theme="dark"] .react-datepicker__year-select {
+  background: #2e3240;
+  color: #e8eaf0;
+  border-color: #3a3f50;
+}
+

@@ -1,0 +1,208 @@
+.form-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.form-container h1 {
+  margin-bottom: 30px;
+  color: var(--text-primary);
+}
+
+.vehicle-form, .expense-form {
+  background: var(--bg-card);
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea,
+.form-group .datepicker-input {
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 1em;
+  background: var(--input-bg);
+  color: var(--text-primary);
+}
+
+.form-group .datepicker-input {
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.form-group .datepicker-input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.color-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.color-trigger {
+  margin-top: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-stat);
+  color: var(--text-primary);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.95em;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.color-trigger:hover {
+  background: var(--bg-page);
+}
+
+.color-trigger-text {
+  font-weight: 500;
+}
+
+.color-preview-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-preview-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+}
+
+.color-preview-value {
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  font-family: monospace;
+}
+
+.color-swatches {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatch-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.swatch-btn.active {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+
+.plate-lookup-btn {
+  margin-top: 10px;
+  align-self: flex-start;
+}
+
+.lookup-message {
+  margin-top: 8px;
+  color: var(--text-secondary);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+
+.field-help {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 0.85em;
+}
+
+.spare-parts-box {
+  border: 1px solid var(--border-color);
+  background: var(--bg-stat);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 20px;
+}
+
+.spare-parts-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.spare-parts-header-row h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.spare-part-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr auto;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.spare-parts-summary {
+  margin-top: 10px;
+  color: var(--text-primary);
+}
+
+.spare-parts-summary p {
+  margin: 6px 0;
+}
+
+@media (max-width: 700px) {
+  .spare-part-row {
+    grid-template-columns: 1fr;
+  }
+
+  .spare-parts-header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

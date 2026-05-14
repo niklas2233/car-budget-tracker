@@ -1,0 +1,192 @@
+.vehicle-details {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.details-header h1 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.btn-back {
+  padding: 10px 20px;
+  background: #95a5a6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+.btn-back:hover {
+  opacity: 0.9;
+}
+
+.vehicle-info-card {
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 2px 4px var(--shadow);
+  margin-bottom: 30px;
+}
+
+.vehicle-info-card h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.info-value {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.info-value.expense {
+  color: #e74c3c;
+}
+
+.info-value.profit {
+  color: #27AE60;
+}
+
+.info-value.total {
+  color: #3498db;
+}
+
+.expenses-section {
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.expenses-section h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.expenses-table {
+  overflow-x: auto;
+}
+
+.expenses-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.expenses-table th,
+.expenses-table td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.expenses-table th {
+  background: var(--bg-stat);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.expenses-table tr:hover {
+  background: var(--bg-stat);
+}
+
+.expense-type {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #3498db;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.85em;
+}
+
+.amount {
+  font-weight: 600;
+  color: #e74c3c;
+}
+
+.btn-delete {
+  padding: 6px 12px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.btn-delete:hover {
+  opacity: 0.9;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 0.82em;
+}
+
+.expense-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.expense-action-btn {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  max-width: 30px;
+  flex: 0 0 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.expense-action-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  transform: translateX(-1px);
+}
+
+.empty-expenses {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+.empty-expenses p {
+  margin-bottom: 20px;
+}
