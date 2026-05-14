@@ -13,7 +13,7 @@ A car budget tracking application built with .NET and React, inspired by the Son
 ## Technology Stack
 
 ### Backend
-- **.NET 9.0** - Web API
+- **.NET 10.0** - Web API
 - **Entity Framework Core** - ORM
 - **SQLite** - Database (no separate database server needed)
 - **Clean Architecture** - Separation of concerns (Core, Infrastructure, API)
@@ -40,7 +40,7 @@ CarBudget/
 
 ### Prerequisites
 
-- **.NET SDK 9.0+** - [Download](https://dotnet.microsoft.com/download)
+- **.NET SDK 10.0+** - [Download](https://dotnet.microsoft.com/download)
 - **Node.js 18+** - [Download](https://nodejs.org/)
 
 ### Running the Backend API
