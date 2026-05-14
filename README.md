@@ -43,7 +43,33 @@ CarBudget/
 - **.NET SDK 10.0+** - [Download](https://dotnet.microsoft.com/download)
 - **Node.js 18+** - [Download](https://nodejs.org/)
 
-### Running the Backend API
+### Running with Docker (Recommended)
+
+1. Install **Docker** - [Download](https://www.docker.com/products/docker-desktop)
+2. Navigate to the project root directory
+3. Start both backend and frontend:
+   ```powershell
+   docker-compose up --build
+   ```
+4. The app will be available at `http://localhost`
+5. API at `http://localhost/api`
+6. Swagger docs at `http://localhost/swagger`
+
+To run in the background:
+```powershell
+docker-compose up -d
+```
+
+To stop the containers:
+```powershell
+docker-compose down
+```
+
+### Running Locally (Without Docker)
+
+#### Running the Backend API
+
+#### Running the Backend API
 
 1. Open a terminal in the project root directory
 2. Run the API:
@@ -54,7 +80,7 @@ CarBudget/
 3. The API will start at `http://localhost:5000`
 4. Swagger documentation available at `http://localhost:5000/swagger`
 
-### Running the Frontend
+#### Running the Frontend
 
 1. Open a **new** terminal in the project root directory
 2. Navigate to frontend and start the development server:
