@@ -184,7 +184,3 @@ This project is open source and available for personal use.
 ## Support
 
 For issues or questions, please create an issue in the repository.
-
----
-
-Built with ❤️ following the Sonarr/Radarr architecture pattern
