@@ -6,6 +6,9 @@ import { expenseApi, vehicleApi } from '../api';
 import { CreateExpenseDto, ExpenseType, Vehicle } from '../types';
 import './VehicleForm.css';
 
+const MAX_EXPENSE_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_EXPENSE_PHOTO_COUNT = 6;
+
 const formatMileage = (value: number) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(value);
 
 type SparePartLine = {
@@ -66,12 +69,15 @@ const ExpenseForm: React.FC = () => {
   const navigate = useNavigate();
 	const { vehicleKey, expenseId } = useParams<{ vehicleKey: string; expenseId: string }>();
 	const isEditMode = Boolean(expenseId);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [mileageInput, setMileageInput] = useState('');
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateExpenseDto>({
 		vehicleId: 0,
 		type: ExpenseType.Fuel,
 		description: '',
+		photoDataUrls: [],
 		amount: 0,
 		date: new Date().toISOString().split('T')[0],
 		mileage: undefined,
@@ -116,6 +122,7 @@ const ExpenseForm: React.FC = () => {
 				vehicleId: e.vehicleId,
 				type: e.type,
 				description: e.description,
+				photoDataUrls: e.photoDataUrls ?? [],
 				amount: e.amount,
 				date: e.date.split('T')[0],
 				mileage: e.mileage,
@@ -186,6 +193,75 @@ const ExpenseForm: React.FC = () => {
 			[name]: value,
 		});
   };
+
+	const openPhotoPicker = () => {
+		photoInputRef.current?.click();
+	};
+
+	const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+		const files = Array.from(event.target.files ?? []);
+		if (files.length === 0) {
+			return;
+		}
+
+		const remainingSlots = MAX_EXPENSE_PHOTO_COUNT - formData.photoDataUrls.length;
+		if (remainingSlots <= 0) {
+			setPhotoError(`You can attach up to ${MAX_EXPENSE_PHOTO_COUNT} images.`);
+			event.target.value = '';
+			return;
+		}
+
+		const filesToRead = files.slice(0, remainingSlots);
+
+		for (const file of filesToRead) {
+			if (!file.type.startsWith('image/')) {
+				setPhotoError('Please choose image files only.');
+				event.target.value = '';
+				return;
+			}
+
+			if (file.size > MAX_EXPENSE_PHOTO_SIZE_BYTES) {
+				setPhotoError('Each image must be smaller than 5 MB.');
+				event.target.value = '';
+				return;
+			}
+		}
+
+		try {
+			const uploadedPhotos = await Promise.all(filesToRead.map((file) => new Promise<string>((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onload = () => {
+					if (typeof reader.result === 'string') {
+						resolve(reader.result);
+						return;
+					}
+
+					reject(new Error('Could not read image file.'));
+				};
+				reader.onerror = () => reject(reader.error ?? new Error('Could not read image file.'));
+				reader.readAsDataURL(file);
+			})));
+
+			setFormData((previous) => ({
+				...previous,
+				photoDataUrls: [...previous.photoDataUrls, ...uploadedPhotos],
+			}));
+			setPhotoError(files.length > filesToRead.length ? `Only ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'} could be added.` : null);
+		} catch (error) {
+			console.error('Error reading expense photos:', error);
+			setPhotoError('Could not load one of those images. Try again.');
+		} finally {
+			event.target.value = '';
+		}
+	};
+
+	const removePhotoAtIndex = (indexToRemove: number) => {
+		setFormData((previous) => ({
+			...previous,
+			photoDataUrls: previous.photoDataUrls.filter((_, index) => index !== indexToRemove),
+		}));
+		setPhotoError(null);
+	};
 
 	const handleSparePartChange = (id: number, field: 'name' | 'cost', value: string) => {
 		setSpareParts((previous) => previous.map((part) => {
@@ -347,6 +423,46 @@ const ExpenseForm: React.FC = () => {
 							onChange={handleChange}
 							required
 						/>
+					</div>
+				</div>
+
+				<div className="form-row">
+					<div className="form-group form-group-photo">
+						<label htmlFor="expensePhotos">Photos</label>
+						<input
+							ref={photoInputRef}
+							type="file"
+							id="expensePhotos"
+							accept="image/*"
+							multiple
+							className="photo-input-hidden"
+							onChange={handlePhotoUpload}
+						/>
+						<div className="expense-photo-editor">
+							<div className="expense-photo-grid">
+								{formData.photoDataUrls.length > 0 ? formData.photoDataUrls.map((photoDataUrl, index) => (
+									<div key={`${index}-${photoDataUrl.slice(0, 32)}`} className="expense-photo-card">
+										<img className="expense-photo-preview" src={photoDataUrl} alt={`Expense attachment ${index + 1}`} />
+										<button
+											type="button"
+											className="btn-danger expense-photo-remove"
+											onClick={() => removePhotoAtIndex(index)}
+										>
+											Remove
+										</button>
+									</div>
+								)) : (
+									<div className="vehicle-photo-placeholder expense-photo-placeholder">No photos attached yet</div>
+								)}
+							</div>
+							<div className="vehicle-photo-actions">
+								<button type="button" className="btn-secondary" onClick={openPhotoPicker}>
+									Add photos
+								</button>
+								<small className="field-help">Attach up to {MAX_EXPENSE_PHOTO_COUNT} images. Good for receipts or part photos.</small>
+								{photoError && <small className="photo-error-message">{photoError}</small>}
+							</div>
+						</div>
 					</div>
 				</div>
 

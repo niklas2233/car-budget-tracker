@@ -96,6 +96,8 @@ using (var scope = app.Services.CreateScope())
             """);
         foreach (var statement in new[]
         {
+            "ALTER TABLE \"Vehicles\" ADD COLUMN \"PhotoDataUrl\" TEXT NULL;",
+            "ALTER TABLE \"Expenses\" ADD COLUMN \"PhotoDataUrlsJson\" TEXT NULL;",
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN \"Vin\" TEXT NULL;",
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN \"InTraffic\" TEXT NULL;",
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN \"SwedishSold\" TEXT NULL;",
@@ -164,6 +166,8 @@ using (var scope = app.Services.CreateScope())
             """);
         foreach (var statement in new[]
         {
+            "ALTER TABLE \"Vehicles\" ADD COLUMN IF NOT EXISTS \"PhotoDataUrl\" text NULL;",
+            "ALTER TABLE \"Expenses\" ADD COLUMN IF NOT EXISTS \"PhotoDataUrlsJson\" text NULL;",
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN IF NOT EXISTS \"Vin\" character varying(50) NULL;",
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN IF NOT EXISTS \"InTraffic\" character varying(20) NULL;",
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN IF NOT EXISTS \"SwedishSold\" character varying(20) NULL;",

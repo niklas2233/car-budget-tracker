@@ -69,6 +69,7 @@ public class VehicleRepository : IVehicleRepository
         vehicle.Make = vehicle.Make.Trim();
         vehicle.Model = vehicle.Model.Trim();
         vehicle.Color = string.IsNullOrWhiteSpace(vehicle.Color) ? null : vehicle.Color.Trim();
+        vehicle.PhotoDataUrl = string.IsNullOrWhiteSpace(vehicle.PhotoDataUrl) ? null : vehicle.PhotoDataUrl.Trim();
         vehicle.VIN = string.IsNullOrWhiteSpace(vehicle.VIN) ? null : vehicle.VIN.Trim().ToUpperInvariant();
         vehicle.LicensePlate = string.IsNullOrWhiteSpace(vehicle.LicensePlate) ? null : vehicle.LicensePlate.Trim().ToUpperInvariant();
     }

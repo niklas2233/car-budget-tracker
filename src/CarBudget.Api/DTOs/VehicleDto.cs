@@ -8,6 +8,7 @@ public class VehicleDto
     public string Make { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;
     public int Year { get; set; }
+    public string? PhotoDataUrl { get; set; }
     public string? VIN { get; set; }
     public string? LicensePlate { get; set; }
     public decimal PurchasePrice { get; set; }
@@ -26,6 +27,7 @@ public class CreateVehicleDto
     public string Make { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;
     public int Year { get; set; }
+    public string? PhotoDataUrl { get; set; }
     public string? VIN { get; set; }
     public string? LicensePlate { get; set; }
     public decimal PurchasePrice { get; set; }
@@ -42,6 +44,7 @@ public class UpdateVehicleDto
     public string Make { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;
     public int Year { get; set; }
+    public string? PhotoDataUrl { get; set; }
     public string? VIN { get; set; }
     public string? LicensePlate { get; set; }
     public decimal PurchasePrice { get; set; }
@@ -101,6 +104,7 @@ public class VehicleExportDto
     public string Make { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;
     public int Year { get; set; }
+    public string? PhotoDataUrl { get; set; }
     public string? VIN { get; set; }
     public string? LicensePlate { get; set; }
     public decimal PurchasePrice { get; set; }
@@ -116,6 +120,7 @@ public class ExpenseExportDto
 {
     public ExpenseType Type { get; set; }
     public string Description { get; set; } = string.Empty;
+    public List<string> PhotoDataUrls { get; set; } = new();
     public decimal Amount { get; set; }
     public DateTime Date { get; set; }
     public int? Mileage { get; set; }

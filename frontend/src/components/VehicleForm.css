@@ -73,6 +73,103 @@
   pointer-events: none;
 }
 
+.photo-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.form-group-photo {
+  grid-column: 1 / -1;
+}
+
+.vehicle-photo-editor {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.vehicle-photo-preview-shell {
+  width: 180px;
+  height: 128px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--bg-stat);
+  flex-shrink: 0;
+}
+
+.vehicle-photo-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.vehicle-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.95em;
+  text-align: center;
+  padding: 16px;
+}
+
+.vehicle-photo-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.expense-photo-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.expense-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.expense-photo-card {
+  position: relative;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-stat);
+  padding: 8px;
+}
+
+.expense-photo-preview {
+  width: 100%;
+  height: 110px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
+
+.expense-photo-remove {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.expense-photo-placeholder {
+  min-height: 110px;
+  border-radius: 12px;
+  border: 1px dashed var(--border-color);
+}
+
+.photo-error-message {
+  color: #c0392b;
+}
+
 .color-trigger {
   margin-top: 2px;
   border: 1px solid var(--border-color);
@@ -197,6 +294,15 @@
 }
 
 @media (max-width: 700px) {
+  .vehicle-photo-editor {
+    flex-direction: column;
+  }
+
+  .vehicle-photo-preview-shell {
+    width: 100%;
+    max-width: 280px;
+  }
+
   .spare-part-row {
     grid-template-columns: 1fr;
   }

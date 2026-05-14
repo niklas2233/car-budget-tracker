@@ -104,6 +104,7 @@
 .expenses-table th,
 .expenses-table td {
   text-align: left;
+  vertical-align: middle;
   padding: 12px;
   border-bottom: 1px solid var(--border-color);
 }
@@ -152,9 +153,79 @@
 }
 
 .expense-actions {
-  display: flex;
+  white-space: nowrap;
+}
+
+.expense-actions-inner {
+  display: inline-flex;
   gap: 6px;
   align-items: center;
+}
+
+.expense-description-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.expense-photo-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.expense-photo-link {
+  display: inline-flex;
+}
+
+.expense-photo-hover-card {
+  position: relative;
+  display: inline-flex;
+}
+
+.expense-photo-hover-preview {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate3d(var(--preview-x, 0), var(--preview-y, 0), 0) scale(0.96);
+  transform-origin: top left;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 200;
+  padding: 8px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--bg-card) 92%, black 8%);
+  box-shadow: 0 16px 32px var(--shadow-hover);
+  border: 1px solid var(--border-color);
+}
+
+.expense-photo-hover-preview.is-visible {
+  opacity: 1;
+  transform: translate3d(var(--preview-x, 0), var(--preview-y, 0), 0) scale(1);
+}
+
+.expense-photo-hover-image {
+  width: 520px;
+  height: 390px;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px;
+}
+
+.expense-history-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+  background: var(--bg-stat);
+}
+
+@media (max-width: 900px) {
+  .expense-photo-hover-preview {
+    display: none;
+  }
 }
 
 .expense-action-btn {

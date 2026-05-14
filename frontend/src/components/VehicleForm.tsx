@@ -6,6 +6,8 @@ import { getApiErrorMessage, vehicleApi } from '../api';
 import { CreateVehicleDto } from '../types';
 import './VehicleForm.css';
 
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+
 const MAKE_MODEL_OPTIONS: Record<string, string[]> = {
 	Audi: [
 		'A1',
@@ -314,8 +316,10 @@ const VehicleForm: React.FC = () => {
 	const { vehicleKey } = useParams<{ vehicleKey: string }>();
 	const isEditMode = Boolean(vehicleKey);
 	const colorInputRef = useRef<HTMLInputElement>(null);
+	const photoInputRef = useRef<HTMLInputElement>(null);
 	const [lookupLoading, setLookupLoading] = useState(false);
 	const [lookupMessage, setLookupMessage] = useState<string | null>(null);
+	const [photoError, setPhotoError] = useState<string | null>(null);
 	const [customMakeModelOptions, setCustomMakeModelOptions] = useState<Record<string, string[]>>(loadCustomMakeModelOptions);
   const [loading, setLoading] = useState(isEditMode);
   const [resolvedVehicleId, setResolvedVehicleId] = useState<number | null>(null);
@@ -324,6 +328,7 @@ const VehicleForm: React.FC = () => {
 	make: 'Volkswagen',
 	model: '',
 	year: new Date().getFullYear(),
+	photoDataUrl: undefined,
 	vin: '',
 	licensePlate: '',
 	purchasePrice: 0,
@@ -346,6 +351,7 @@ const VehicleForm: React.FC = () => {
 		? [formData.model, ...baseModelsForMake]
 		: baseModelsForMake;
 	const selectedColor = formData.color || '#000000';
+	const vehicleDisplayName = formData.nickname?.trim() || [formData.year, formData.make, formData.model].filter(Boolean).join(' ');
 
 	const addFetchedMakeModelOption = (make?: string, model?: string) => {
 		const normalizedMake = make?.trim();
@@ -405,6 +411,7 @@ const VehicleForm: React.FC = () => {
 					make: vehicle.make,
 					model: vehicle.model,
 					year: vehicle.year,
+					photoDataUrl: vehicle.photoDataUrl,
 					vin: vehicle.vin || '',
 					licensePlate: vehicle.licensePlate || '',
 					purchasePrice: vehicle.purchasePrice,
@@ -541,11 +548,72 @@ const VehicleForm: React.FC = () => {
 		colorInputRef.current?.click();
 	};
 
+	const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) {
+			return;
+		}
+
+		if (!file.type.startsWith('image/')) {
+			setPhotoError('Please choose an image file.');
+			event.target.value = '';
+			return;
+		}
+
+		if (file.size > MAX_PHOTO_SIZE_BYTES) {
+			setPhotoError('Please choose an image smaller than 5 MB.');
+			event.target.value = '';
+			return;
+		}
+
+		try {
+			const photoDataUrl = await new Promise<string>((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onload = () => {
+					if (typeof reader.result === 'string') {
+						resolve(reader.result);
+						return;
+					}
+
+					reject(new Error('Could not read image file.'));
+				};
+				reader.onerror = () => reject(reader.error ?? new Error('Could not read image file.'));
+				reader.readAsDataURL(file);
+			});
+
+			setFormData((previous) => ({
+				...previous,
+				photoDataUrl,
+			}));
+			setPhotoError(null);
+		} catch (error) {
+			console.error('Error reading vehicle photo:', error);
+			setPhotoError('Could not load that image. Try another file.');
+		} finally {
+			event.target.value = '';
+		}
+	};
+
+	const clearPhoto = () => {
+		setFormData((previous) => ({
+			...previous,
+			photoDataUrl: undefined,
+		}));
+		setPhotoError(null);
+		if (photoInputRef.current) {
+			photoInputRef.current.value = '';
+		}
+	};
+
 	const setPresetColor = (color: string) => {
 		setFormData({
 			...formData,
 			color,
 		});
+	};
+
+	const openPhotoPicker = () => {
+		photoInputRef.current?.click();
 	};
 
 	if (loading) {
@@ -618,6 +686,45 @@ const VehicleForm: React.FC = () => {
 			  onChange={handleChange}
 			  placeholder="e.g. Old Faithful, The Beast"
 			/>
+		  </div>
+		</div>
+
+		<div className="form-row">
+		  <div className="form-group form-group-photo">
+			<label htmlFor="vehiclePhoto">Photo</label>
+			<input
+			  ref={photoInputRef}
+			  type="file"
+			  id="vehiclePhoto"
+			  accept="image/*"
+			  className="photo-input-hidden"
+			  onChange={handlePhotoUpload}
+			/>
+			<div className="vehicle-photo-editor">
+			  <div className="vehicle-photo-preview-shell">
+				{formData.photoDataUrl ? (
+				  <img
+					className="vehicle-photo-preview"
+					src={formData.photoDataUrl}
+					alt={vehicleDisplayName ? `${vehicleDisplayName} preview` : 'Vehicle preview'}
+				  />
+				) : (
+				  <div className="vehicle-photo-placeholder">No photo selected</div>
+				)}
+			  </div>
+			  <div className="vehicle-photo-actions">
+				<button type="button" className="btn-secondary" onClick={openPhotoPicker}>
+				  {formData.photoDataUrl ? 'Replace photo' : 'Upload photo'}
+				</button>
+				{formData.photoDataUrl && (
+				  <button type="button" className="btn-secondary" onClick={clearPhoto}>
+					Remove photo
+				  </button>
+				)}
+				<small className="field-help">JPG, PNG, WebP or GIF up to 5 MB.</small>
+				{photoError && <small className="photo-error-message">{photoError}</small>}
+			  </div>
+			</div>
 		  </div>
 		</div>
 

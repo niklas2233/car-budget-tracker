@@ -41,6 +41,7 @@ public class VehiclesController : ControllerBase
                 Make = vehicle.Make,
                 Model = vehicle.Model,
                 Year = vehicle.Year,
+                PhotoDataUrl = vehicle.PhotoDataUrl,
                 VIN = vehicle.VIN,
                 LicensePlate = vehicle.LicensePlate,
                 PurchasePrice = vehicle.PurchasePrice,
@@ -72,6 +73,7 @@ public class VehiclesController : ControllerBase
             Make = vehicle.Make,
             Model = vehicle.Model,
             Year = vehicle.Year,
+            PhotoDataUrl = vehicle.PhotoDataUrl,
             VIN = vehicle.VIN,
             LicensePlate = vehicle.LicensePlate,
             PurchasePrice = vehicle.PurchasePrice,
@@ -102,6 +104,7 @@ public class VehiclesController : ControllerBase
             Make = vehicle.Make,
             Model = vehicle.Model,
             Year = vehicle.Year,
+            PhotoDataUrl = vehicle.PhotoDataUrl,
             VIN = vehicle.VIN,
             LicensePlate = vehicle.LicensePlate,
             PurchasePrice = vehicle.PurchasePrice,
@@ -263,6 +266,7 @@ public class VehiclesController : ControllerBase
             Make = dto.Make,
             Model = dto.Model,
             Year = dto.Year,
+            PhotoDataUrl = dto.PhotoDataUrl,
             VIN = dto.VIN,
             LicensePlate = dto.LicensePlate,
             PurchasePrice = dto.PurchasePrice,
@@ -289,6 +293,7 @@ public class VehiclesController : ControllerBase
             Make = vehicle.Make,
             Model = vehicle.Model,
             Year = vehicle.Year,
+            PhotoDataUrl = vehicle.PhotoDataUrl,
             VIN = vehicle.VIN,
             LicensePlate = vehicle.LicensePlate,
             PurchasePrice = vehicle.PurchasePrice,
@@ -315,6 +320,7 @@ public class VehiclesController : ControllerBase
         vehicle.Make = dto.Make;
         vehicle.Model = dto.Model;
         vehicle.Year = dto.Year;
+        vehicle.PhotoDataUrl = dto.PhotoDataUrl;
         vehicle.VIN = dto.VIN;
         vehicle.LicensePlate = dto.LicensePlate;
         vehicle.PurchasePrice = dto.PurchasePrice;
@@ -363,6 +369,7 @@ public class VehiclesController : ControllerBase
                 Make = vehicle.Make,
                 Model = vehicle.Model,
                 Year = vehicle.Year,
+                PhotoDataUrl = vehicle.PhotoDataUrl,
                 VIN = vehicle.VIN,
                 LicensePlate = vehicle.LicensePlate,
                 PurchasePrice = vehicle.PurchasePrice,
@@ -379,6 +386,9 @@ public class VehiclesController : ControllerBase
                 {
                     Type = e.Type,
                     Description = e.Description,
+                    PhotoDataUrls = string.IsNullOrWhiteSpace(e.PhotoDataUrlsJson)
+                        ? new List<string>()
+                        : JsonSerializer.Deserialize<List<string>>(e.PhotoDataUrlsJson) ?? new List<string>(),
                     Amount = e.Amount,
                     Date = e.Date,
                     Mileage = e.Mileage,
@@ -420,6 +430,7 @@ public class VehiclesController : ControllerBase
             Make = dto.Vehicle.Make,
             Model = dto.Vehicle.Model,
             Year = dto.Vehicle.Year,
+            PhotoDataUrl = dto.Vehicle.PhotoDataUrl,
             VIN = dto.Vehicle.VIN,
             LicensePlate = dto.Vehicle.LicensePlate,
             PurchasePrice = dto.Vehicle.PurchasePrice,
@@ -447,6 +458,7 @@ public class VehiclesController : ControllerBase
                 VehicleId = vehicle.Id,
                 Type = importedExpense.Type,
                 Description = importedExpense.Description,
+                PhotoDataUrlsJson = importedExpense.PhotoDataUrls.Count == 0 ? null : JsonSerializer.Serialize(importedExpense.PhotoDataUrls),
                 Amount = importedExpense.Amount,
                 Date = importedExpense.Date,
                 Mileage = importedExpense.Mileage,
@@ -467,6 +479,7 @@ public class VehiclesController : ControllerBase
             Make = vehicle.Make,
             Model = vehicle.Model,
             Year = vehicle.Year,
+            PhotoDataUrl = vehicle.PhotoDataUrl,
             VIN = vehicle.VIN,
             LicensePlate = vehicle.LicensePlate,
             PurchasePrice = vehicle.PurchasePrice,

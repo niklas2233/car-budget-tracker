@@ -4,12 +4,40 @@ import { vehicleApi } from '../api';
 import { Vehicle, VehicleExportPackageDto } from '../types';
 import './Dashboard.css';
 
+const DASHBOARD_PREVIEW_WIDTH = 440;
+const DASHBOARD_PREVIEW_HEIGHT = 330;
+
+type HoverPreview = {
+	src: string;
+	alt: string;
+	x: number;
+	y: number;
+};
+
+const getHoverPreviewPosition = (clientX: number, clientY: number, previewWidth: number, previewHeight: number) => {
+	const offset = 24;
+	const minEdgePadding = 16;
+	const maxLeft = Math.max(minEdgePadding, window.innerWidth - previewWidth - minEdgePadding);
+	const maxTop = Math.max(minEdgePadding, window.innerHeight - previewHeight - minEdgePadding);
+
+	let x = clientX + offset;
+	if (x > maxLeft) {
+		x = Math.max(minEdgePadding, clientX - previewWidth - offset);
+	}
+
+	const centeredTop = clientY - previewHeight / 2;
+	const y = Math.min(maxTop, Math.max(minEdgePadding, centeredTop));
+
+	return { x, y };
+};
+
 const Dashboard: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
 	const [selectedVehicleIds, setSelectedVehicleIds] = useState<number[]>([]);
 	const [isExportMode, setIsExportMode] = useState(false);
 	const importInputRef = useRef<HTMLInputElement>(null);
+  const [hoverPreview, setHoverPreview] = useState<HoverPreview | null>(null);
   const navigate = useNavigate();
 
   const loadVehicles = useCallback(async (retries = 3) => {
@@ -63,10 +91,6 @@ const Dashboard: React.FC = () => {
 	}).format(amount);
   };
 
-  const calculateTotalCost = (vehicle: Vehicle) => {
-	return vehicle.purchasePrice + vehicle.totalExpenses;
-  };
-
   const calculateProfitLoss = (vehicle: Vehicle) => {
 	const sellPrice = vehicle.sellPrice ?? 0;
 	return sellPrice - vehicle.purchasePrice - vehicle.totalExpenses;
@@ -79,6 +103,27 @@ const Dashboard: React.FC = () => {
   const getVehicleRouteKey = (vehicle: Vehicle) => {
 	return vehicle.licensePlate ? encodeURIComponent(vehicle.licensePlate) : String(vehicle.id);
   };
+
+	const hoverPreviewStyle = hoverPreview
+	  ? {
+		'--preview-x': `${hoverPreview.x}px`,
+		'--preview-y': `${hoverPreview.y}px`,
+	  } as React.CSSProperties
+	  : undefined;
+	const hoverPreviewSrc = hoverPreview?.src ?? '';
+
+	const getVehicleDisplayName = (vehicle: Vehicle) => {
+	  return vehicle.nickname ? vehicle.nickname : `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+	};
+
+	const handleVehiclePreviewMove = (event: React.MouseEvent<HTMLElement>, src: string, alt: string) => {
+	  const { x, y } = getHoverPreviewPosition(event.clientX, event.clientY, DASHBOARD_PREVIEW_WIDTH, DASHBOARD_PREVIEW_HEIGHT);
+	  setHoverPreview({ src, alt, x, y });
+	};
+
+	const clearVehiclePreview = () => {
+	  setHoverPreview(null);
+	};
 
   const toggleVehicleSelection = (vehicleId: number) => {
 	setSelectedVehicleIds((previous) => (
@@ -246,11 +291,31 @@ const Dashboard: React.FC = () => {
 				</label>
 			  )}
 			  <div className="vehicle-header">
-				<h3>
+				<div className="vehicle-title-wrap">
+				  {vehicle.photoDataUrl ? (
+					<div
+					  className="vehicle-thumb-hover-card"
+					  onMouseEnter={(event) => handleVehiclePreviewMove(event, vehicle.photoDataUrl!, `${getVehicleDisplayName(vehicle)} preview`)}
+					  onMouseMove={(event) => handleVehiclePreviewMove(event, vehicle.photoDataUrl!, `${getVehicleDisplayName(vehicle)} preview`)}
+					  onMouseLeave={clearVehiclePreview}
+					>
+					  <img
+						className="vehicle-thumb"
+						src={vehicle.photoDataUrl}
+						alt={`${getVehicleDisplayName(vehicle)} preview`}
+					  />
+					</div>
+				  ) : (
+					<div className="vehicle-thumb vehicle-thumb-placeholder" aria-hidden="true">
+					  {vehicle.make.charAt(0)}
+					</div>
+				  )}
+				  <h3>
 				  <Link to={`/vehicles/${getVehicleRouteKey(vehicle)}`} className="vehicle-title-link">
-					{vehicle.nickname ? vehicle.nickname : `${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+					{getVehicleDisplayName(vehicle)}
 				  </Link>
-				</h3>
+				  </h3>
+				</div>
 				<span className="vehicle-color" style={{ backgroundColor: vehicle.color || '#ccc' }}></span>
 			  </div>
 			  {vehicle.nickname && (
@@ -303,6 +368,20 @@ const Dashboard: React.FC = () => {
 			  </div>
 			</div>
 		  ))}
+		</div>
+	  )}
+
+	  {hoverPreview && (
+		<div
+		  className="vehicle-thumb-hover-preview is-visible"
+		  style={hoverPreviewStyle}
+		  aria-hidden="true"
+		>
+		  <img
+			className="vehicle-thumb-hover-image"
+			src={hoverPreviewSrc}
+			alt=""
+		  />
 		</div>
 	  )}
 	</div>

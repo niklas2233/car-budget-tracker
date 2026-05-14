@@ -2,6 +2,7 @@ using CarBudget.Api.DTOs;
 using CarBudget.Core.Entities;
 using CarBudget.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace CarBudget.Api.Controllers;
 
@@ -58,6 +59,7 @@ public class ExpensesController : ControllerBase
             VehicleId = dto.VehicleId,
             Type = dto.Type,
             Description = dto.Description,
+            PhotoDataUrlsJson = SerializePhotoDataUrls(dto.PhotoDataUrls),
             Amount = dto.Amount,
             Date = dto.Date,
             Mileage = dto.Mileage,
@@ -81,6 +83,7 @@ public class ExpensesController : ControllerBase
 
         expense.Type = dto.Type;
         expense.Description = dto.Description;
+        expense.PhotoDataUrlsJson = SerializePhotoDataUrls(dto.PhotoDataUrls);
         expense.Amount = dto.Amount;
         expense.Date = dto.Date;
         expense.Mileage = dto.Mileage;
@@ -115,6 +118,7 @@ public class ExpensesController : ControllerBase
             Type = expense.Type,
             TypeName = expense.Type.ToString(),
             Description = expense.Description,
+            PhotoDataUrls = ParsePhotoDataUrls(expense.PhotoDataUrlsJson),
             Amount = expense.Amount,
             Date = expense.Date,
             Mileage = expense.Mileage,
@@ -122,5 +126,34 @@ public class ExpensesController : ControllerBase
             Notes = expense.Notes,
             Shipping = expense.Shipping
         };
+    }
+
+    private static List<string> ParsePhotoDataUrls(string? photoDataUrlsJson)
+    {
+        if (string.IsNullOrWhiteSpace(photoDataUrlsJson))
+            return new List<string>();
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(photoDataUrlsJson)
+                ?.Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(value => value.Trim())
+                .ToList() ?? new List<string>();
+        }
+        catch
+        {
+            return new List<string>();
+        }
+    }
+
+    private static string? SerializePhotoDataUrls(IEnumerable<string>? photoDataUrls)
+    {
+        var normalized = photoDataUrls?
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList() ?? new List<string>();
+
+        return normalized.Count == 0 ? null : JsonSerializer.Serialize(normalized);
     }
 }

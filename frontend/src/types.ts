@@ -3,6 +3,7 @@ export interface Vehicle {
   make: string;
   model: string;
   year: number;
+  photoDataUrl?: string;
   vin?: string;
   licensePlate?: string;
   purchasePrice: number;
@@ -20,6 +21,7 @@ export interface CreateVehicleDto {
   make: string;
   model: string;
   year: number;
+  photoDataUrl?: string;
   vin?: string;
   licensePlate?: string;
   purchasePrice: number;
@@ -73,6 +75,7 @@ export interface VehicleLookupCacheDto extends VehicleLookupDto {
 export interface ExpenseExportDto {
   type: ExpenseType;
   description: string;
+  photoDataUrls: string[];
   amount: number;
   date: string;
   mileage?: number;
@@ -85,6 +88,7 @@ export interface VehicleExportDto {
   make: string;
   model: string;
   year: number;
+  photoDataUrl?: string;
   vin?: string;
   licensePlate?: string;
   purchasePrice: number;
@@ -110,6 +114,7 @@ export interface Expense {
   type: ExpenseType;
   typeName: string;
   description: string;
+  photoDataUrls: string[];
   amount: number;
   date: string;
   mileage?: number;
@@ -122,6 +127,7 @@ export interface CreateExpenseDto {
   vehicleId: number;
   type: ExpenseType;
   description: string;
+  photoDataUrls: string[];
   amount: number;
   date: string;
   mileage?: number;

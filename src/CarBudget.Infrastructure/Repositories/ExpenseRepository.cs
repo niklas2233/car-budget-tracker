@@ -2,6 +2,7 @@ using CarBudget.Core.Entities;
 using CarBudget.Core.Interfaces;
 using CarBudget.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace CarBudget.Infrastructure.Repositories;
 
@@ -39,6 +40,7 @@ public class ExpenseRepository : IExpenseRepository
 
     public async Task<Expense> AddAsync(Expense expense)
     {
+        NormalizeExpense(expense);
         _context.Expenses.Add(expense);
         await _context.SaveChangesAsync();
         return expense;
@@ -46,6 +48,7 @@ public class ExpenseRepository : IExpenseRepository
 
     public async Task UpdateAsync(Expense expense)
     {
+        NormalizeExpense(expense);
         expense.UpdatedAt = DateTime.UtcNow;
         _context.Expenses.Update(expense);
         await _context.SaveChangesAsync();
@@ -74,5 +77,34 @@ public class ExpenseRepository : IExpenseRepository
             .Where(e => e.VehicleId == vehicleId && e.Date >= startDate && e.Date <= endDate)
             .OrderByDescending(e => e.Date)
             .ToListAsync();
+    }
+
+    private static void NormalizeExpense(Expense expense)
+    {
+        expense.Description = expense.Description.Trim();
+        expense.Vendor = string.IsNullOrWhiteSpace(expense.Vendor) ? null : expense.Vendor.Trim();
+        expense.Notes = string.IsNullOrWhiteSpace(expense.Notes) ? null : expense.Notes.Trim();
+
+        if (string.IsNullOrWhiteSpace(expense.PhotoDataUrlsJson))
+        {
+            expense.PhotoDataUrlsJson = null;
+            return;
+        }
+
+        try
+        {
+            var parsed = JsonSerializer.Deserialize<List<string>>(expense.PhotoDataUrlsJson) ?? new List<string>();
+            var normalized = parsed
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(value => value.Trim())
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            expense.PhotoDataUrlsJson = normalized.Count == 0 ? null : JsonSerializer.Serialize(normalized);
+        }
+        catch
+        {
+            expense.PhotoDataUrlsJson = null;
+        }
     }
 }

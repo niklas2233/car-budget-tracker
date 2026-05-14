@@ -23,6 +23,7 @@ public class CarBudgetDbContext : DbContext
             entity.Property(e => e.Make).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Model).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Year).IsRequired();
+            entity.Property(e => e.PhotoDataUrl);
             entity.Property(e => e.PurchasePrice).HasColumnType("decimal(18,2)");
             entity.Property(e => e.SellPrice).HasColumnType("decimal(18,2)");
             entity.Property(e => e.VIN).HasMaxLength(17);
@@ -48,6 +49,7 @@ public class CarBudgetDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.PhotoDataUrlsJson);
             entity.Property(e => e.Amount).HasColumnType("decimal(18,2)").IsRequired();
             entity.Property(e => e.Date).IsRequired();
             entity.Property(e => e.Type).IsRequired();

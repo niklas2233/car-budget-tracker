@@ -10,6 +10,7 @@ public class ExpenseDto
     public ExpenseType Type { get; set; }
     public string TypeName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public List<string> PhotoDataUrls { get; set; } = new();
     public decimal Amount { get; set; }
     public DateTime Date { get; set; }
     public int? Mileage { get; set; }
@@ -23,6 +24,7 @@ public class CreateExpenseDto
     public int VehicleId { get; set; }
     public ExpenseType Type { get; set; }
     public string Description { get; set; } = string.Empty;
+    public List<string> PhotoDataUrls { get; set; } = new();
     public decimal Amount { get; set; }
     public DateTime Date { get; set; }
     public int? Mileage { get; set; }
@@ -35,6 +37,7 @@ public class UpdateExpenseDto
 {
     public ExpenseType Type { get; set; }
     public string Description { get; set; } = string.Empty;
+    public List<string> PhotoDataUrls { get; set; } = new();
     public decimal Amount { get; set; }
     public DateTime Date { get; set; }
     public int? Mileage { get; set; }

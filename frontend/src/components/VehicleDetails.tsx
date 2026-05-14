@@ -4,6 +4,33 @@ import { vehicleApi, expenseApi, getApiErrorMessage } from '../api';
 import { Vehicle, Expense } from '../types';
 import './VehicleDetails.css';
 
+const EXPENSE_PREVIEW_WIDTH = 520;
+const EXPENSE_PREVIEW_HEIGHT = 390;
+
+type HoverPreview = {
+	src: string;
+	alt: string;
+	x: number;
+	y: number;
+};
+
+const getHoverPreviewPosition = (clientX: number, clientY: number, previewWidth: number, previewHeight: number) => {
+	const offset = 24;
+	const minEdgePadding = 16;
+	const maxLeft = Math.max(minEdgePadding, window.innerWidth - previewWidth - minEdgePadding);
+	const maxTop = Math.max(minEdgePadding, window.innerHeight - previewHeight - minEdgePadding);
+
+	let x = clientX + offset;
+	if (x > maxLeft) {
+		x = Math.max(minEdgePadding, clientX - previewWidth - offset);
+	}
+
+	const centeredTop = clientY - previewHeight / 2;
+	const y = Math.min(maxTop, Math.max(minEdgePadding, centeredTop));
+
+	return { x, y };
+};
+
 const VehicleDetails: React.FC = () => {
   const { vehicleKey } = useParams<{ vehicleKey: string }>();
   const navigate = useNavigate();
@@ -11,6 +38,7 @@ const VehicleDetails: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
 	const [refreshingCarInfo, setRefreshingCarInfo] = useState(false);
+	const [hoverPreview, setHoverPreview] = useState<HoverPreview | null>(null);
 
   const loadData = useCallback(async () => {
 	if (!vehicleKey) {
@@ -87,6 +115,23 @@ const VehicleDetails: React.FC = () => {
 	return new Date(dateString).toLocaleDateString();
   };
 
+	const handleExpensePreviewMove = (event: React.MouseEvent<HTMLElement>, src: string, alt: string) => {
+	  const { x, y } = getHoverPreviewPosition(event.clientX, event.clientY, EXPENSE_PREVIEW_WIDTH, EXPENSE_PREVIEW_HEIGHT);
+	  setHoverPreview({ src, alt, x, y });
+	};
+
+	const clearExpensePreview = () => {
+	  setHoverPreview(null);
+	};
+
+	const hoverPreviewStyle = hoverPreview
+	  ? {
+		'--preview-x': `${hoverPreview.x}px`,
+		'--preview-y': `${hoverPreview.y}px`,
+	  } as React.CSSProperties
+	  : undefined;
+	const hoverPreviewSrc = hoverPreview?.src ?? '';
+
   if (loading) {
 	return <div className="loading">Loading...</div>;
   }
@@ -100,6 +145,7 @@ const VehicleDetails: React.FC = () => {
 	: null;
 
   return (
+	<>
 	<div className="vehicle-details">
 	  <div className="details-header">
 		<button className="btn-back" onClick={() => navigate('/')}>
@@ -217,27 +263,59 @@ const VehicleDetails: React.FC = () => {
 				  <tr key={expense.id}>
 					<td>{formatDate(expense.date)}</td>
 					<td><span className="expense-type">{expense.typeName}</span></td>
-					<td>{expense.description}</td>
+					<td>
+					  <div className="expense-description-cell">
+						<span>{expense.description}</span>
+						{expense.photoDataUrls.length > 0 && (
+						  <div className="expense-photo-strip">
+							{expense.photoDataUrls.map((photoDataUrl, index) => (
+							  <div
+								key={`${expense.id}-${index}`}
+								className="expense-photo-hover-card"
+								onMouseEnter={(event) => handleExpensePreviewMove(event, photoDataUrl, `${expense.description} attachment ${index + 1}`)}
+								onMouseMove={(event) => handleExpensePreviewMove(event, photoDataUrl, `${expense.description} attachment ${index + 1}`)}
+								onMouseLeave={clearExpensePreview}
+							  >
+								<a
+								  href={photoDataUrl}
+								  target="_blank"
+								  rel="noreferrer"
+								  className="expense-photo-link"
+								>
+								  <img
+									src={photoDataUrl}
+									alt={`${expense.description} attachment ${index + 1}`}
+									className="expense-history-thumb"
+								  />
+								</a>
+							  </div>
+							))}
+						  </div>
+						)}
+					  </div>
+					</td>
 					<td className="amount">{formatCurrency(expense.type === 10 ? expense.amount : expense.amount + (expense.shipping ?? 0))}</td>
 					<td>{expense.vendor || '-'}</td>
 					<td>{expense.mileage ? expense.mileage.toLocaleString('sv-SE') : '-'}</td>
 					<td className="expense-actions">
-					  <button
-						className="btn-secondary btn-sm expense-action-btn"
-						title="Edit expense"
-						aria-label="Edit expense"
-						onClick={() => navigate(`/vehicles/${vehicle.licensePlate ? encodeURIComponent(vehicle.licensePlate) : vehicle.id}/expenses/${expense.id}/edit`)}
-					  >
-						<span className="expense-action-emoji" aria-hidden="true">🔧</span>
-					  </button>
-					  <button
-						className="btn-delete btn-sm expense-action-btn"
-						title="Delete expense"
-						aria-label="Delete expense"
-						onClick={() => handleDeleteExpense(expense.id)}
-					  >
-						<span className="expense-action-emoji" aria-hidden="true">🗑️</span>
-					  </button>
+					  <div className="expense-actions-inner">
+						<button
+						  className="btn-secondary btn-sm expense-action-btn"
+						  title="Edit expense"
+						  aria-label="Edit expense"
+						  onClick={() => navigate(`/vehicles/${vehicle.licensePlate ? encodeURIComponent(vehicle.licensePlate) : vehicle.id}/expenses/${expense.id}/edit`)}
+						>
+						  <span className="expense-action-emoji" aria-hidden="true">🔧</span>
+						</button>
+						<button
+						  className="btn-delete btn-sm expense-action-btn"
+						  title="Delete expense"
+						  aria-label="Delete expense"
+						  onClick={() => handleDeleteExpense(expense.id)}
+						>
+						  <span className="expense-action-emoji" aria-hidden="true">🗑️</span>
+						</button>
+					  </div>
 					</td>
 				  </tr>
 				))}
@@ -247,6 +325,21 @@ const VehicleDetails: React.FC = () => {
 		)}
 	  </div>
 	</div>
+
+	  {hoverPreview && (
+		<div
+		  className="expense-photo-hover-preview is-visible"
+		  style={hoverPreviewStyle}
+		  aria-hidden="true"
+		>
+		  <img
+			className="expense-photo-hover-image"
+			src={hoverPreviewSrc}
+			alt=""
+		  />
+		</div>
+	  )}
+	</>
   );
 };
 

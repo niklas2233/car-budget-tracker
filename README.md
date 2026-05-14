@@ -1,6 +1,6 @@
 # 🚗 Car Budget Manager
 
-A car budget tracking application built with .NET and React, inspired by the Sonarr/Radarr architecture.
+A car budget tracking application built with .NET and React.
 
 ## Features
 
@@ -65,7 +65,7 @@ PORT=3000
 
 Then run:
 ```powershell
-docker-compose up --build
+docker compose up --build
 ```
 
 Both the web UI and API will now run on the same port:
@@ -78,12 +78,12 @@ Both the web UI and API will now run on the same port:
 
 To run in the background:
 ```powershell
-docker-compose up -d
+docker compose up -d
 ```
 
 To stop the containers:
 ```powershell
-docker-compose down
+docker compose down
 ```
 
 ### Running Locally (Without Docker)
