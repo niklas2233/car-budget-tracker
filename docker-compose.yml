@@ -20,7 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile.web
     ports:
-      - "${PORT:-80}:80"
+      - "${PORT:-2233}:80"
     depends_on:
       - api
     restart: unless-stopped

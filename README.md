@@ -51,9 +51,9 @@ CarBudget/
    ```powershell
    docker-compose up --build
    ```
-4. The app will be available at `http://localhost`
-5. API at `http://localhost/api`
-6. Swagger docs at `http://localhost/swagger`
+4. The app will be available at `http://localhost:2233`
+5. API at `http://localhost:2233/api`
+6. Swagger docs at `http://localhost:2233/swagger`
 
 #### Customizing Port with Environment Variables
 
@@ -74,7 +74,7 @@ Both the web UI and API will now run on the same port:
 - Swagger docs: `http://localhost:3000/swagger`
 
 **Available Environment Variables:**
-- `PORT` - Port for both Web UI and API (default: 80)
+- `PORT` - Port for both Web UI and API (default: 2233)
 
 To run in the background:
 ```powershell
