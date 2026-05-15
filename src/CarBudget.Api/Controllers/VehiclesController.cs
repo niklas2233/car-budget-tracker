@@ -5,6 +5,7 @@ using CarBudget.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Playwright;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -15,6 +16,11 @@ namespace CarBudget.Api.Controllers;
 [Route("api/[controller]")]
 public class VehiclesController : ControllerBase
 {
+    private static readonly SemaphoreSlim BrowserInitLock = new(1, 1);
+    private static readonly ConcurrentDictionary<string, Task<string?>> InflightLookupFetches = new(StringComparer.OrdinalIgnoreCase);
+    private static IPlaywright? _playwright;
+    private static IBrowser? _browser;
+
     private readonly IVehicleRepository _vehicleRepository;
     private readonly IExpenseRepository _expenseRepository;
     private readonly CarBudgetDbContext _dbContext;
@@ -202,7 +208,7 @@ public class VehiclesController : ControllerBase
         }
 
         var url = $"https://www.car.info/sv-se/license-plate/S/{normalizedPlate}#specs";
-        var parseHtml = await TryFetchRenderedPageHtmlAsync(url);
+        var parseHtml = await FetchRenderedPageHtmlDeduplicatedAsync(url, normalizedPlate, forceRefresh);
         if (string.IsNullOrWhiteSpace(parseHtml))
         {
             if (!forceRefresh && hasCachedLookupFields)
@@ -832,15 +838,41 @@ public class VehiclesController : ControllerBase
         return specs;
     }
 
-    private static async Task<string?> TryFetchRenderedPageHtmlAsync(string url)
+    private static Task<string?> FetchRenderedPageHtmlDeduplicatedAsync(string url, string normalizedPlate, bool forceRefresh)
     {
-        var browserPath = GetEdgeExecutablePath();
+        if (forceRefresh)
+            return TryFetchRenderedPageHtmlAsync(url);
 
+        return InflightLookupFetches.GetOrAdd(normalizedPlate, _ => FetchAndReleaseAsync(normalizedPlate, url));
+    }
+
+    private static async Task<string?> FetchAndReleaseAsync(string normalizedPlate, string url)
+    {
         try
         {
-            using var playwright = await Playwright.CreateAsync();
-            
-            BrowserTypeLaunchOptions launchOptions = new BrowserTypeLaunchOptions
+            return await TryFetchRenderedPageHtmlAsync(url);
+        }
+        finally
+        {
+            InflightLookupFetches.TryRemove(normalizedPlate, out _);
+        }
+    }
+
+    private static async Task<IBrowser> GetOrCreateBrowserAsync()
+    {
+        if (_browser is { IsConnected: true })
+            return _browser;
+
+        await BrowserInitLock.WaitAsync();
+        try
+        {
+            if (_browser is { IsConnected: true })
+                return _browser;
+
+            _playwright ??= await Playwright.CreateAsync();
+
+            var browserPath = GetEdgeExecutablePath();
+            var launchOptions = new BrowserTypeLaunchOptions
             {
                 Headless = true,
                 Args = new[]
@@ -848,14 +880,24 @@ public class VehiclesController : ControllerBase
                     "--disable-blink-features=AutomationControlled"
                 }
             };
-            
-            // Set custom executable path only if one was found
-            if (!string.IsNullOrEmpty(browserPath))
-            {
-                launchOptions.ExecutablePath = browserPath;
-            }
 
-            await using var browser = await playwright.Chromium.LaunchAsync(launchOptions);
+            if (!string.IsNullOrEmpty(browserPath))
+                launchOptions.ExecutablePath = browserPath;
+
+            _browser = await _playwright.Chromium.LaunchAsync(launchOptions);
+            return _browser;
+        }
+        finally
+        {
+            BrowserInitLock.Release();
+        }
+    }
+
+    private static async Task<string?> TryFetchRenderedPageHtmlAsync(string url)
+    {
+        try
+        {
+            var browser = await GetOrCreateBrowserAsync();
 
             await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
             {
@@ -868,18 +910,29 @@ public class VehiclesController : ControllerBase
 
             await page.GotoAsync(url, new PageGotoOptions
             {
-                WaitUntil = WaitUntilState.NetworkIdle,
-                Timeout = 45000
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout = 30000
+            });
+
+            // Prefer concrete readiness checks over long fixed waits.
+            await page.WaitForSelectorAsync("#specifications .sprow, #specifications span.sptitle", new PageWaitForSelectorOptions
+            {
+                Timeout = 6000
             });
 
             var expandButton = page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Visa fler" });
             if (await expandButton.CountAsync() > 0 && await expandButton.First.IsVisibleAsync())
             {
                 await expandButton.First.ClickAsync();
+                await page.WaitForTimeoutAsync(1200);
             }
 
-            await page.WaitForTimeoutAsync(5000);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle, new PageWaitForLoadStateOptions { Timeout = 3000 });
             return await page.ContentAsync();
+        }
+        catch (TimeoutException)
+        {
+            return null;
         }
         catch (Exception ex)
         {

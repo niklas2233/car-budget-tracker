@@ -49,7 +49,7 @@ CarBudget/
 2. Navigate to the project root directory
 3. Start the app:
    ```powershell
-   docker-compose up --build
+   docker compose up --build
    ```
 4. The app will be available at `http://localhost:2233`
 5. API at `http://localhost:2233/api`
@@ -60,7 +60,7 @@ CarBudget/
 Create a `.env` file in the project root (copy from `.env.example`):
 
 ```
-PORT=3000
+PORT=2233
 ```
 
 Then run:
