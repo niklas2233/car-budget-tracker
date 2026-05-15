@@ -27,7 +27,6 @@ WORKDIR /app
 # Install Chromium and all dependencies for Playwright web scraping
 RUN apt-get update && apt-get install -y \
     chromium \
-    chromium-common \
     libxss1 \
     libx11-6 \
     libx11-xcb1 \
