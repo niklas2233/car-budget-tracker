@@ -904,21 +904,22 @@ public class VehiclesController : ControllerBase
         }
 
         // Linux/Docker paths for Chromium
+        // IMPORTANT: Only check for the real chromium binary, NOT the snap wrapper at /usr/bin/chromium-browser
         var linuxCandidates = new[]
         {
-            "/usr/bin/chromium",              // Debian/Ubuntu chromium package
-            "/snap/bin/chromium",             // Snap chromium (works in Docker if snappy is available)
-            "/usr/bin/chromium-browser"       // Old package name
+            "/usr/bin/chromium"              // Real Debian/Ubuntu chromium package binary
         };
 
         foreach (var candidate in linuxCandidates)
         {
             if (System.IO.File.Exists(candidate))
+            {
                 return candidate;
+            }
         }
 
-        // If in Docker and no browser found, still try /usr/bin/chromium as fallback
-        // The package should be installed even if File.Exists check fails
+        // If in Docker and chromium binary not found via File.Exists, return the expected path anyway
+        // (sometimes file detection fails but the binary is still installed)
         var runningInContainer = string.Equals(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), "true", StringComparison.OrdinalIgnoreCase);
         if (runningInContainer)
         {
