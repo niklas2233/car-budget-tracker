@@ -1,0 +1,33 @@
+# Single-container build: React frontend + .NET API in one image
+
+# Build frontend assets
+FROM node:20-alpine AS frontend-build
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+# Build backend
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-build
+WORKDIR /src
+COPY src/CarBudget.Api/CarBudget.Api.csproj src/CarBudget.Api/
+COPY src/CarBudget.Core/CarBudget.Core.csproj src/CarBudget.Core/
+COPY src/CarBudget.Infrastructure/CarBudget.Infrastructure.csproj src/CarBudget.Infrastructure/
+WORKDIR /src/src/CarBudget.Api
+RUN dotnet restore
+COPY src/ /src/src/
+WORKDIR /src/src/CarBudget.Api
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=backend-build /app/publish ./
+COPY --from=frontend-build /frontend/build ./wwwroot
+
+ENV ASPNETCORE_URLS=http://+:5000
+ENV ASPNETCORE_ENVIRONMENT=Production
+EXPOSE 5000
+
+ENTRYPOINT ["dotnet", "CarBudget.Api.dll"]

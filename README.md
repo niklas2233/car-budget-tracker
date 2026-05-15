@@ -47,7 +47,7 @@ CarBudget/
 
 1. Install **Docker** - [Download](https://www.docker.com/products/docker-desktop)
 2. Navigate to the project root directory
-3. Start both backend and frontend:
+3. Start the app:
    ```powershell
    docker-compose up --build
    ```
@@ -68,7 +68,7 @@ Then run:
 docker compose up --build
 ```
 
-Both the web UI and API will now run on the same port:
+Both the web UI and API run from one container on the same port:
 - Web UI: `http://localhost:3000`
 - API: `http://localhost:3000/api`
 - Swagger docs: `http://localhost:3000/swagger`
@@ -85,6 +85,10 @@ To stop the containers:
 ```powershell
 docker compose down
 ```
+
+### Legacy Docker Compose (Two Containers)
+
+The old two-container setup is still available if needed (Nginx + API), but the default compose file now uses a single container.
 
 ### Running Locally (Without Docker)
 

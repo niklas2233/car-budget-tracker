@@ -196,7 +196,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowAll");
 
-if (!app.Environment.IsDevelopment())
+var runningInContainer = string.Equals(
+    Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"),
+    "true",
+    StringComparison.OrdinalIgnoreCase);
+
+if (!app.Environment.IsDevelopment() && !runningInContainer)
 {
     app.UseHttpsRedirection();
 }
@@ -204,6 +209,9 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.MapFallbackToFile("index.html");
 
 app.Run();
 
