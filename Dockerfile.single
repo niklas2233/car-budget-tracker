@@ -24,16 +24,9 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 
-# Install Chromium and dependencies for Playwright web scraping
+# Install Chromium for Playwright web scraping
 RUN apt-get update && apt-get install -y \
     chromium \
-    chromium-common \
-    libnss3 \
-    libxss1 \
-    fonts-liberation \
-    xdg-utils \
-    libappindicator1 \
-    libindicator7 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=backend-build /app/publish ./
