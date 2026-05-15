@@ -23,6 +23,12 @@ RUN dotnet publish -c Release -o /app/publish
 # Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
+
+# Install Chromium for Playwright web scraping
+RUN apt-get update && apt-get install -y \
+    chromium-browser \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=backend-build /app/publish ./
 COPY --from=frontend-build /frontend/build ./wwwroot
 

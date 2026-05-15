@@ -835,21 +835,27 @@ public class VehiclesController : ControllerBase
     private static async Task<string?> TryFetchRenderedPageHtmlAsync(string url)
     {
         var browserPath = GetEdgeExecutablePath();
-        if (browserPath == null)
-            return null;
 
         try
         {
             using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            
+            BrowserTypeLaunchOptions launchOptions = new BrowserTypeLaunchOptions
             {
                 Headless = true,
-                ExecutablePath = browserPath,
                 Args = new[]
                 {
                     "--disable-blink-features=AutomationControlled"
                 }
-            });
+            };
+            
+            // Set custom executable path only if one was found
+            if (!string.IsNullOrEmpty(browserPath))
+            {
+                launchOptions.ExecutablePath = browserPath;
+            }
+
+            await using var browser = await playwright.Chromium.LaunchAsync(launchOptions);
 
             await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
             {
@@ -884,18 +890,34 @@ public class VehiclesController : ControllerBase
 
     private static string? GetEdgeExecutablePath()
     {
-        var candidates = new[]
+        // Windows paths for Edge
+        var windowsCandidates = new[]
         {
             @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
             @"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
         };
 
-        foreach (var candidate in candidates)
+        foreach (var candidate in windowsCandidates)
         {
             if (System.IO.File.Exists(candidate))
                 return candidate;
         }
 
+        // Linux/Docker paths for Chromium
+        var linuxCandidates = new[]
+        {
+            "/usr/bin/chromium-browser",
+            "/usr/bin/chromium",
+            "/snap/bin/chromium"
+        };
+
+        foreach (var candidate in linuxCandidates)
+        {
+            if (System.IO.File.Exists(candidate))
+                return candidate;
+        }
+
+        // In Docker, return null to let Playwright use its bundled Chromium
         return null;
     }
 
