@@ -903,11 +903,11 @@ public class VehiclesController : ControllerBase
                 return candidate;
         }
 
-        // Linux/Docker paths for Chromium
-        // IMPORTANT: Only check for the real chromium binary, NOT the snap wrapper at /usr/bin/chromium-browser
+        // Linux/Docker paths for Chromium (real binary only, not snap wrappers)
         var linuxCandidates = new[]
         {
-            "/usr/bin/chromium"              // Real Debian/Ubuntu chromium package binary
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser"
         };
 
         foreach (var candidate in linuxCandidates)
@@ -918,15 +918,7 @@ public class VehiclesController : ControllerBase
             }
         }
 
-        // If in Docker and chromium binary not found via File.Exists, return the expected path anyway
-        // (sometimes file detection fails but the binary is still installed)
-        var runningInContainer = string.Equals(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), "true", StringComparison.OrdinalIgnoreCase);
-        if (runningInContainer)
-        {
-            return "/usr/bin/chromium";
-        }
-
-        // In non-Docker environment, return null to let Playwright use its bundled Chromium
+        // Return null to let Playwright use its own bundled Chromium (installed via PLAYWRIGHT_BROWSERS_PATH)
         return null;
     }
 
