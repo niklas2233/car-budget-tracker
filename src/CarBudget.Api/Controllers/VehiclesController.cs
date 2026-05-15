@@ -906,9 +906,9 @@ public class VehiclesController : ControllerBase
         // Linux/Docker paths for Chromium
         var linuxCandidates = new[]
         {
-            "/usr/bin/chromium-browser",
-            "/usr/bin/chromium",
-            "/snap/bin/chromium"
+            "/usr/bin/chromium",           // Debian/Ubuntu chromium package
+            "/usr/bin/chromium-browser",   // Old chromium package name
+            "/snap/bin/chromium"           // Snap-installed chromium
         };
 
         foreach (var candidate in linuxCandidates)
