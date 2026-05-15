@@ -24,9 +24,10 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 
-# Install Chromium and dependencies for Playwright web scraping
+# Install Chromium and all dependencies for Playwright web scraping
 RUN apt-get update && apt-get install -y \
     chromium \
+    chromium-common \
     libxss1 \
     libx11-6 \
     libx11-xcb1 \
@@ -34,16 +35,11 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender1 \
     libfontconfig1 \
+    libfreetype6 \
     && rm -rf /var/lib/apt/lists/*
-
-# Install Playwright CLI to download browsers
-RUN dotnet tool install -g Microsoft.Playwright.CLI
 
 COPY --from=backend-build /app/publish ./
 COPY --from=frontend-build /frontend/build ./wwwroot
-
-# Install Playwright browsers
-RUN /root/.dotnet/tools/playwright install
 
 ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production

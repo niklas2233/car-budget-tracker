@@ -906,7 +906,9 @@ public class VehiclesController : ControllerBase
         // Linux/Docker paths for Chromium
         var linuxCandidates = new[]
         {
-            "/usr/bin/chromium"            // Debian/Ubuntu chromium package (real binary, not snap wrapper)
+            "/usr/bin/chromium",              // Debian/Ubuntu chromium package
+            "/snap/bin/chromium",             // Snap chromium (works in Docker if snappy is available)
+            "/usr/bin/chromium-browser"       // Old package name
         };
 
         foreach (var candidate in linuxCandidates)
@@ -915,7 +917,15 @@ public class VehiclesController : ControllerBase
                 return candidate;
         }
 
-        // In Docker, return null to let Playwright use its bundled Chromium
+        // If in Docker and no browser found, still try /usr/bin/chromium as fallback
+        // The package should be installed even if File.Exists check fails
+        var runningInContainer = string.Equals(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), "true", StringComparison.OrdinalIgnoreCase);
+        if (runningInContainer)
+        {
+            return "/usr/bin/chromium";
+        }
+
+        // In non-Docker environment, return null to let Playwright use its bundled Chromium
         return null;
     }
 
