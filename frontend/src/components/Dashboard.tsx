@@ -34,6 +34,7 @@ const getHoverPreviewPosition = (clientX: number, clientY: number, previewWidth:
 const Dashboard: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
+	const [showSoldVehicles, setShowSoldVehicles] = useState(true);
 	const [selectedVehicleIds, setSelectedVehicleIds] = useState<number[]>([]);
 	const [isExportMode, setIsExportMode] = useState(false);
 	const importInputRef = useRef<HTMLInputElement>(null);
@@ -125,6 +126,16 @@ const Dashboard: React.FC = () => {
 	  setHoverPreview(null);
 	};
 
+	const isVehicleSold = (vehicle: Vehicle) => {
+	  const hasSellPrice = vehicle.sellPrice !== undefined && vehicle.sellPrice !== null;
+	  const hasSellDate = Boolean(vehicle.sellDate);
+	  return hasSellPrice || hasSellDate;
+	};
+
+	const filteredVehicles = showSoldVehicles
+	  ? vehicles
+	  : vehicles.filter((vehicle) => !isVehicleSold(vehicle));
+
   const toggleVehicleSelection = (vehicleId: number) => {
 	setSelectedVehicleIds((previous) => (
 	  previous.includes(vehicleId)
@@ -133,15 +144,18 @@ const Dashboard: React.FC = () => {
 	));
   };
 
-	const allVehiclesSelected = vehicles.length > 0 && selectedVehicleIds.length === vehicles.length;
+	const allVehiclesSelected = filteredVehicles.length > 0
+	  && filteredVehicles.every((vehicle) => selectedVehicleIds.includes(vehicle.id));
 
 	const handleToggleSelectAll = () => {
+	  const filteredVehicleIds = filteredVehicles.map((vehicle) => vehicle.id);
+
 	  if (allVehiclesSelected) {
-		setSelectedVehicleIds([]);
+		setSelectedVehicleIds((previous) => previous.filter((id) => !filteredVehicleIds.includes(id)));
 		return;
 	  }
 
-	  setSelectedVehicleIds(vehicles.map((vehicle) => vehicle.id));
+	  setSelectedVehicleIds((previous) => Array.from(new Set([...previous, ...filteredVehicleIds])));
 	};
 
   const handleExportSelectedVehicles = async () => {
@@ -243,6 +257,14 @@ const Dashboard: React.FC = () => {
 	  <div className="dashboard-header">
 		<h1>Car Budget Dashboard</h1>
 				<div className="dashboard-header-actions">
+					<label className="sold-toggle">
+						<input
+							type="checkbox"
+							checked={showSoldVehicles}
+							onChange={(event) => setShowSoldVehicles(event.target.checked)}
+						/>
+						<span>Show sold cars</span>
+					</label>
 					<button className="btn-secondary" onClick={triggerImport}>
 						Import JSON
 					</button>
@@ -276,9 +298,14 @@ const Dashboard: React.FC = () => {
 			Add Vehicle
 		  </button>
 		</div>
+	  ) : (filteredVehicles.length === 0 ? (
+		<div className="empty-state">
+		  <h2>No matching vehicles</h2>
+		  <p>Turn on "Show sold cars" to include sold vehicles in the dashboard.</p>
+		</div>
 	  ) : (
 		<div className="vehicle-grid">
-		  {vehicles.map((vehicle) => (
+		  {filteredVehicles.map((vehicle) => (
 			<div key={vehicle.id} className="vehicle-card">
 			  {isExportMode && (
 				<label className="vehicle-export-select">
@@ -315,6 +342,7 @@ const Dashboard: React.FC = () => {
 					{getVehicleDisplayName(vehicle)}
 				  </Link>
 				  </h3>
+				  {isVehicleSold(vehicle) && <span className="vehicle-status-sold">Sold</span>}
 				</div>
 				<span className="vehicle-color" style={{ backgroundColor: vehicle.color || '#ccc' }}></span>
 			  </div>
@@ -341,7 +369,11 @@ const Dashboard: React.FC = () => {
 				</div>
 				<div className="stat">
 				  <span className="stat-label">Sell Price</span>
-				  <span className="stat-value sell">{vehicle.sellPrice ? formatPurchasePrice(vehicle.sellPrice) : '—'}</span>
+				  <span className="stat-value sell">
+					{vehicle.sellPrice !== undefined && vehicle.sellPrice !== null
+					  ? formatPurchasePrice(vehicle.sellPrice)
+					  : '—'}
+				  </span>
 				</div>
 				<div className="stat">
 				  <span className="stat-label">Total Expenses</span>
@@ -369,7 +401,7 @@ const Dashboard: React.FC = () => {
 			</div>
 		  ))}
 		</div>
-	  )}
+	  ))}
 
 	  {hoverPreview && (
 		<div
