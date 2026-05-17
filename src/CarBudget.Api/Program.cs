@@ -14,8 +14,17 @@ var databaseProvider = builder.Configuration["Database:Provider"]
     ?? Environment.GetEnvironmentVariable("CARBUDGET_DB_PROVIDER")
     ?? "Sqlite";
 
+var runningInContainer = string.Equals(
+    Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"),
+    "true",
+    StringComparison.OrdinalIgnoreCase);
+
+var defaultSqliteConnectionString = runningInContainer
+    ? "Data Source=/app/data/carbudget.db"
+    : "Data Source=carbudget.db";
+
 var sqliteConnectionString = builder.Configuration.GetConnectionString("SqliteConnection")
-    ?? "Data Source=carbudget.db";
+    ?? defaultSqliteConnectionString;
 
 var postgresConnectionString = builder.Configuration.GetConnectionString("PostgresConnection")
     ?? "Host=localhost;Port=5432;Database=carbudget;Username=postgres;Password=postgres";
@@ -195,11 +204,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAll");
-
-var runningInContainer = string.Equals(
-    Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"),
-    "true",
-    StringComparison.OrdinalIgnoreCase);
 
 if (!app.Environment.IsDevelopment() && !runningInContainer)
 {
