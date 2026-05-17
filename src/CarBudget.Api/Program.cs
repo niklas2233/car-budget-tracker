@@ -26,6 +26,11 @@ var defaultSqliteConnectionString = runningInContainer
 var sqliteConnectionString = builder.Configuration.GetConnectionString("SqliteConnection")
     ?? defaultSqliteConnectionString;
 
+if (runningInContainer && string.Equals(sqliteConnectionString.Trim(), "Data Source=carbudget.db", StringComparison.OrdinalIgnoreCase))
+{
+    sqliteConnectionString = "Data Source=/app/data/carbudget.db";
+}
+
 var postgresConnectionString = builder.Configuration.GetConnectionString("PostgresConnection")
     ?? "Host=localhost;Port=5432;Database=carbudget;Username=postgres;Password=postgres";
 
