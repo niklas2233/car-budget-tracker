@@ -63,6 +63,8 @@ Create a `.env` file in the project root (copy from `.env.example`):
 PORT=2233
 ```
 
+Database is located at /app/data if you want to bind a volume or a hostpath to the Database files
+
 Then run:
 ```powershell
 docker compose up --build
