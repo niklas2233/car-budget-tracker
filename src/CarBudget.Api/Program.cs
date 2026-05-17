@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var webUiPort = Environment.GetEnvironmentVariable("webui_port") ?? "2233";
+builder.WebHost.UseUrls($"http://+:{webUiPort}");
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
