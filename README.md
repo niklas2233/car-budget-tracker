@@ -48,49 +48,38 @@ CarBudget/
 1. Install **Docker** - [Download](https://www.docker.com/products/docker-desktop)
 2. Navigate to the project root directory
 3. Start the app:
-   ```powershell
-   docker compose up --build
+   ```bash
+   docker compose up -d --build
    ```
 4. The app will be available at `http://localhost:2233`
 5. API at `http://localhost:2233/api`
 6. Swagger docs at `http://localhost:2233/swagger`
 
-#### Customizing Port with Environment Variables
-
-Create a `.env` file in the project root (copy from `.env.example`):
-
-```
-PORT=2233
-```
-
-Database is located at /app/data if you want to bind a volume or a hostpath to the Database files
-
-Then run:
-```powershell
-docker compose up --build
-```
-
-Both the web UI and API run from one container on the same port:
-- Web UI: `http://localhost:3000`
-- API: `http://localhost:3000/api`
-- Swagger docs: `http://localhost:3000/swagger`
-
-**Available Environment Variables:**
-- `PORT` - Port for both Web UI and API (default: 2233)
-
-To run in the background:
-```powershell
-docker compose up -d
-```
-
 To stop the containers:
-```powershell
+```bash
 docker compose down
 ```
 
-### Legacy Docker Compose (Two Containers)
+#### Customizing the Port
 
-The old two-container setup is still available if needed (Nginx + API), but the default compose file now uses a single container.
+Edit `webui_port` in `docker-compose.yml`:
+
+```yaml
+environment:
+  - webui_port=2233   # change this to your desired port
+```
+
+The port mapping updates automatically to match.
+
+#### Persisting the Database
+
+By default the database is stored inside the container at `/app/data/carbudget.db`.  
+To persist it on the host, set the volume in `docker-compose.yml`:
+
+```yaml
+volumes:
+  - /your/host/path:/app/data
+```
 
 ### Running Locally (Without Docker)
 
