@@ -39,8 +39,8 @@ RUN npx -y playwright@1.54.0 install --with-deps chromium
 COPY --from=backend-build /app/publish ./
 COPY --from=frontend-build /frontend/build ./wwwroot
 
-ENV ASPNETCORE_URLS=http://+:5000
+ENV ASPNETCORE_URLS=http://+:2233
 ENV ASPNETCORE_ENVIRONMENT=Production
-EXPOSE 5000
+EXPOSE 2233
 
 ENTRYPOINT ["dotnet", "CarBudget.Api.dll"]

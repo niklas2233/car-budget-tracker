@@ -5,10 +5,9 @@ services:
       context: .
       dockerfile: Dockerfile.single
     ports:
-      - "${PORT:-2233}:5000"
+      - 2233:2233
     environment:
-      - ASPNETCORE_URLS=http://+:5000
-      - ASPNETCORE_ENVIRONMENT=Production
+      - webui_port=2233
     volumes:
       - ./data:/app/data
     restart: unless-stopped
