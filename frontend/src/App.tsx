@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
+import EconomyDashboard from './components/EconomyDashboard';
 import VehicleForm from './components/VehicleForm';
 import VehicleDetails from './components/VehicleDetails';
 import ExpenseForm from './components/ExpenseForm';
@@ -21,10 +22,16 @@ function App() {
     <Router>
       <div className="App">
         <header className="App-header">
-          <Link to="/" className="App-home-link" aria-label="Go to dashboard">
-            <h1>🚗 Car Budget Manager</h1>
-            <p>Track your vehicle expenses like a pro</p>
-          </Link>
+          <div className="App-header-left">
+            <Link to="/" className="App-home-link" aria-label="Go to dashboard">
+              <h1>🚗 Car Budget Manager</h1>
+              <p>Track your vehicle expenses like a pro</p>
+            </Link>
+            <nav className="App-nav" aria-label="Primary navigation">
+              <Link to="/" className="App-nav-link">Dashboard</Link>
+              <Link to="/economy" className="App-nav-link">Economy</Link>
+            </nav>
+          </div>
           <button
             className="dark-mode-toggle"
             onClick={() => setDarkMode(d => !d)}
@@ -36,6 +43,7 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/economy" element={<EconomyDashboard />} />
             <Route path="/vehicles/new" element={<VehicleForm />} />
             <Route path="/vehicles/:vehicleKey/edit" element={<VehicleForm />} />
             <Route path="/vehicles/:vehicleKey" element={<VehicleDetails />} />

@@ -5,8 +5,20 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var webUiPort = Environment.GetEnvironmentVariable("webui_port") ?? "2233";
-builder.WebHost.UseUrls($"http://+:{webUiPort}");
+var runningInContainer = string.Equals(
+    Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"),
+    "true",
+    StringComparison.OrdinalIgnoreCase);
+
+var webUiPort = Environment.GetEnvironmentVariable("webui_port");
+if (!string.IsNullOrWhiteSpace(webUiPort))
+{
+    builder.WebHost.UseUrls($"http://+:{webUiPort}");
+}
+else if (runningInContainer)
+{
+    builder.WebHost.UseUrls("http://+:2233");
+}
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -16,11 +28,6 @@ builder.Services.AddHttpClient();
 var databaseProvider = builder.Configuration["Database:Provider"]
     ?? Environment.GetEnvironmentVariable("CARBUDGET_DB_PROVIDER")
     ?? "Sqlite";
-
-var runningInContainer = string.Equals(
-    Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"),
-    "true",
-    StringComparison.OrdinalIgnoreCase);
 
 var defaultSqliteConnectionString = runningInContainer
     ? "Data Source=/app/data/carbudget.db"

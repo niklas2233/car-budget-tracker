@@ -85,8 +85,6 @@ volumes:
 
 #### Running the Backend API
 
-#### Running the Backend API
-
 1. Open a terminal in the project root directory
 2. Run the API:
    ```powershell

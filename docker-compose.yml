@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.single
+    container_name: carbudget-app
     ports:
       - ${webui_port:-2233}:${webui_port:-2233}
     environment:
