@@ -72,6 +72,17 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+static string NormalizeRegion(string? value)
+{
+    var region = (value ?? string.Empty).Trim().ToLowerInvariant();
+    return region switch
+    {
+        "norway" => "norway",
+        "europe" => "europe",
+        _ => "sweden"
+    };
+}
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CarBudgetDbContext>();
@@ -226,6 +237,13 @@ if (!app.Environment.IsDevelopment() && !runningInContainer)
 }
 
 app.UseAuthorization();
+
+app.MapGet("/api/runtime-config.js", (HttpContext context) =>
+{
+    var region = NormalizeRegion(Environment.GetEnvironmentVariable("region"));
+    context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
+    return Results.Content($"window.__APP_REGION__ = '{region}';", "application/javascript");
+});
 
 app.MapControllers();
 app.UseDefaultFiles();

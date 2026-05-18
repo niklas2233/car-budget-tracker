@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { vehicleApi } from '../api';
+import { formatCurrency, formatWholeCurrency } from '../currency';
 import { Vehicle, VehicleExportPackageDto } from '../types';
 import './Dashboard.css';
 
@@ -79,17 +80,8 @@ const Dashboard: React.FC = () => {
 	}
   };
 
-  const formatCurrency = (amount: number) => {
-	return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount);
-  };
-
   const formatPurchasePrice = (amount: number) => {
-	return new Intl.NumberFormat('sv-SE', {
-	  style: 'currency',
-	  currency: 'SEK',
-	  minimumFractionDigits: 0,
-	  maximumFractionDigits: 0,
-	}).format(amount);
+	return formatWholeCurrency(amount);
   };
 
   const calculateProfitLoss = (vehicle: Vehicle) => {

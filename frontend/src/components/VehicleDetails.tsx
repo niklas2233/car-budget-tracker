@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { vehicleApi, expenseApi, getApiErrorMessage } from '../api';
+import { formatCurrency, formatWholeCurrency } from '../currency';
 import { Vehicle, Expense } from '../types';
 import './VehicleDetails.css';
 
@@ -98,17 +99,8 @@ const VehicleDetails: React.FC = () => {
 	}
   };
 
-  const formatCurrency = (amount: number) => {
-	return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount);
-  };
-
   const formatPurchasePrice = (amount: number) => {
-	return new Intl.NumberFormat('sv-SE', {
-	  style: 'currency',
-	  currency: 'SEK',
-	  minimumFractionDigits: 0,
-	  maximumFractionDigits: 0,
-	}).format(amount);
+	return formatWholeCurrency(amount);
   };
 
   const formatDate = (dateString: string) => {

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { expenseApi, getApiErrorMessage, vehicleApi } from '../api';
+import { formatCurrency } from '../currency';
 import { Expense, Vehicle } from '../types';
 import './EconomyDashboard.css';
 
@@ -178,11 +179,6 @@ const EconomyDashboard: React.FC = () => {
       vehicleRows,
     };
   }, [endDate, expenses, rangeError, startDate, vehicles]);
-
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('sv-SE', {
-    style: 'currency',
-    currency: 'SEK',
-  }).format(amount);
 
   if (loading) {
     return <div className="economy-loading">Loading economy dashboard...</div>;

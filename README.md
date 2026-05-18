@@ -71,6 +71,27 @@ environment:
 
 The port mapping updates automatically to match.
 
+#### Choosing Region and Currency
+
+Set `region` to control frontend currency formatting:
+
+- `sweden` -> SEK
+- `norway` -> NOK
+- `europe` -> EUR
+
+Docker example:
+
+```powershell
+$env:region='norway'
+docker compose up -d
+```
+
+If omitted, the app defaults to `sweden`. If you change `region` later, restart the container:
+
+```powershell
+docker compose restart app
+```
+
 #### Persisting the Database
 
 By default the database is stored inside the container at `/app/data/carbudget.db`.  
@@ -88,6 +109,7 @@ volumes:
 1. Open a terminal in the project root directory
 2. Run the API:
    ```powershell
+   $env:region='europe'   # sweden | norway | europe
    cd src/CarBudget.Api
    dotnet run
    ```

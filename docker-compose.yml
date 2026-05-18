@@ -6,9 +6,10 @@ services:
       dockerfile: Dockerfile.single
     container_name: carbudget-app
     ports:
-      - ${webui_port:-2233}:${webui_port:-2233}
+      - 2233:2233
     environment:
-      - webui_port=2233
+      webui_port: 2233
+      region: sweden
     volumes:
       - ./data:/app/data
     restart: unless-stopped
