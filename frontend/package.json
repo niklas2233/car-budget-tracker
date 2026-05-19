@@ -26,7 +26,7 @@
   "main": "public/electron.js",
   "scripts": {
     "start": "set PORT=2233&&react-scripts start",
-    "build": "react-scripts build && npm run copy-to-api",
+    "build": "react-scripts build",
     "build-backend": "dotnet publish ..\\src\\CarBudget.Api\\CarBudget.Api.csproj -c Release -r win-x64 --self-contained true -o backend",
     "copy-to-api": "xcopy build\\* ..\\src\\CarBudget.Api\\wwwroot\\ /E /Y /I",
     "test": "react-scripts test",
@@ -34,8 +34,8 @@
     "electron-start": "electron .",
     "electron-tray": "electron . --tray",
     "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:2233 && electron .\"",
-    "electron-build": "npm run build && npm run build-backend && electron-builder",
-    "electron-build-win": "npm run build && npm run build-backend && electron-builder --win"
+    "electron-build": "npm run build && npm run copy-to-api && npm run build-backend && electron-builder",
+    "electron-build-win": "npm run build && npm run copy-to-api && npm run build-backend && electron-builder --win"
   },
   "devDependencies": {
     "electron": "^32.0.0",
