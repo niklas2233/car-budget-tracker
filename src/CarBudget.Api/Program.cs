@@ -169,27 +169,18 @@ app.UseAuthorization();
 
 app.MapGet("/api/runtime-config.js", (HttpContext context) =>
 {
-    var runtimeRegionSource = Environment.GetEnvironmentVariable("region")
-        ?? LoadFileConfig(configFilePath)?.Region
-        ?? effectiveRegion;
-    var runtimeRegion = NormalizeRegion(runtimeRegionSource);
     context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
-    return Results.Content($"window.__APP_REGION__ = '{runtimeRegion}';", "application/javascript");
+    return Results.Content($"window.__APP_REGION__ = '{VehiclesController.Region}';", "application/javascript");
 });
 
 app.MapGet("/api/setup-status", () =>
 {
-    var runtimeConfig = LoadFileConfig(configFilePath);
-    var runtimeRegionSource = Environment.GetEnvironmentVariable("region")
-        ?? runtimeConfig?.Region
-        ?? effectiveRegion;
-
     return Results.Ok(new AppSetupStatusDto
     {
         SetupRequired = setupRequiredCheck(),
         DataDirectoryPath = dataDirectoryPath,
         ConfigFilePath = configFilePath,
-        CurrentRegion = NormalizeRegion(runtimeRegionSource),
+        CurrentRegion = VehiclesController.Region,
         DebugSavePlaywrightHtml = VehiclesController.DebugSaveHtml,
     });
 });
@@ -198,7 +189,7 @@ app.MapGet("/api/app-config", () =>
 {
     return Results.Ok(new AppConfigurationDto
     {
-        Region = effectiveRegion,
+        Region = VehiclesController.Region,
         DataDirectoryPath = dataDirectoryPath,
         ConfigFilePath = configFilePath,
         DebugSavePlaywrightHtml = VehiclesController.DebugSaveHtml,
