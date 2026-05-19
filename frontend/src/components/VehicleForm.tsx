@@ -4,6 +4,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { getApiErrorMessage, vehicleApi } from '../api';
 import { CreateVehicleDto } from '../types';
+import { appCurrency, appLocale } from '../currency';
 import './VehicleForm.css';
 
 const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
@@ -278,7 +279,7 @@ const mergeMakeModelOptions = (
 	return merged;
 };
 
-const formatMileage = (value: number) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(value);
+const formatMileage = (value: number) => new Intl.NumberFormat(appLocale, { maximumFractionDigits: 0 }).format(value);
 
 const CAR_INFO_COLOR_MAP: Record<string, string> = {
 	black: '#111111',
@@ -763,7 +764,7 @@ const VehicleForm: React.FC = () => {
 
 		<div className="form-row">
 		  <div className="form-group">
-			<label htmlFor="purchasePrice">Purchase Price (SEK) *</label>
+			<label htmlFor="purchasePrice">Purchase Price ({appCurrency}) *</label>
 			<input
 			  type="number"
 			  id="purchasePrice"
@@ -841,7 +842,7 @@ const VehicleForm: React.FC = () => {
 
 		<div className="form-row">
 		  <div className="form-group">
-			<label htmlFor="sellPrice">Sell Price (SEK)</label>
+			<label htmlFor="sellPrice">Sell Price ({appCurrency})</label>
 			<input
 			  type="number"
 			  id="sellPrice"

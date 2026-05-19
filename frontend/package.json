@@ -2,7 +2,6 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:5000",
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -23,11 +22,59 @@
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
+  "homepage": "./",
+  "main": "public/electron.js",
   "scripts": {
     "start": "set PORT=2233&&react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && npm run copy-to-api",
+    "build-backend": "dotnet publish ..\\src\\CarBudget.Api\\CarBudget.Api.csproj -c Release -r win-x64 --self-contained true -o backend",
+    "copy-to-api": "xcopy build\\* ..\\src\\CarBudget.Api\\wwwroot\\ /E /Y /I",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "electron-start": "electron .",
+    "electron-tray": "electron . --tray",
+    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:2233 && electron .\"",
+    "electron-build": "npm run build && npm run build-backend && electron-builder",
+    "electron-build-win": "npm run build && npm run build-backend && electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.1.8",
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.carbudget.app",
+    "productName": "CarBudget",
+    "files": [
+      "build/**/*",
+      "public/electron.js",
+      "public/preload.js",
+      "public/favicon.ico"
+    ],
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "directories": {
+      "buildResources": "public"
+    },
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "eslintConfig": {
     "extends": [

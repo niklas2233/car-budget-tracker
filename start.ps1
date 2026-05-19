@@ -1,4 +1,7 @@
 # Car Budget Manager - Startup Script
+param(
+	[switch]$Tray
+)
 
 Write-Host "Starting Car Budget Manager..." -ForegroundColor Green
 Write-Host ""
@@ -65,19 +68,36 @@ else {
 	Write-Host "Using embedded SQLite file database for self-hosted mode." -ForegroundColor Green
 }
 
-# Start the backend API
-Write-Host "Starting Backend API..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\src\CarBudget.Api'; Write-Host 'Backend API Starting...' -ForegroundColor Yellow; dotnet run"
+# Build frontend assets into API wwwroot for single-port mode
+Write-Host "Building Frontend for single-port mode..." -ForegroundColor Cyan
+$npmCommand = Get-Command npm -ErrorAction SilentlyContinue
 
-# Wait for the API to start (database initialization takes time on first run)
-Start-Sleep -Seconds 8
+if ($null -eq $npmCommand) {
+	Write-Error "npm was not found in PATH. Install Node.js or add npm to PATH, then run this script again."
+	return
+}
 
-# Start the frontend
-Write-Host "Starting Frontend..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\frontend'; Write-Host 'Frontend Starting...' -ForegroundColor Yellow; & 'C:\Program Files\nodejs\npm.cmd' start"
+Push-Location "$PSScriptRoot\frontend"
+& npm run build
+$buildExitCode = $LASTEXITCODE
+Pop-Location
+
+if ($buildExitCode -ne 0) {
+	Write-Error "Frontend build failed. Backend was not started."
+	return
+}
+
+# Start only the backend API (serves both UI and API on port 2233)
+Write-Host "Starting Backend (UI + API on one port)..." -ForegroundColor Cyan
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\src\CarBudget.Api'; Write-Host 'Backend Starting (single-port mode)...' -ForegroundColor Yellow; dotnet run"
+
+if ($Tray) {
+	Write-Host "Starting Tray App..." -ForegroundColor Cyan
+	Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\frontend'; Write-Host 'Tray App Starting...' -ForegroundColor Yellow; npm run electron-tray"
+}
 
 Write-Host ""
-Write-Host "Both services are starting!" -ForegroundColor Green
+Write-Host "Single-port service is starting!" -ForegroundColor Green
 Write-Host ""
 if ($dbProvider -ieq "PostgreSql" -or $dbProvider -ieq "Postgres") {
 	Write-Host "PostgreSQL is expected at: localhost:5432 (database: carbudget)" -ForegroundColor White
@@ -85,8 +105,11 @@ if ($dbProvider -ieq "PostgreSql" -or $dbProvider -ieq "Postgres") {
 else {
 	Write-Host "SQLite database file: src/CarBudget.Api/carbudget.db" -ForegroundColor White
 }
-Write-Host "Backend API will be available at: http://localhost:5000" -ForegroundColor White
-Write-Host "OpenAPI document will be available at: http://localhost:5000/openapi/v1.json" -ForegroundColor White
-Write-Host "Frontend will open automatically at: http://localhost:2233" -ForegroundColor White
+Write-Host "Web UI will be available at: http://localhost:2233" -ForegroundColor White
+Write-Host "Backend API will be available at: http://localhost:2233/api" -ForegroundColor White
+Write-Host "OpenAPI document will be available at: http://localhost:2233/openapi/v1.json" -ForegroundColor White
+if ($Tray) {
+	Write-Host "Tray app started. Use system tray icon to open/hide/quit." -ForegroundColor White
+}
 Write-Host ""
 Write-Host "Keeping window open. Close when finished." -ForegroundColor Gray

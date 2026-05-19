@@ -1,7 +1,9 @@
+using CarBudget.Api.Controllers;
 using CarBudget.Core.Interfaces;
 using CarBudget.Infrastructure.Data;
 using CarBudget.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,17 @@ var runningInContainer = string.Equals(
     Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"),
     "true",
     StringComparison.OrdinalIgnoreCase);
+
+var dataDirectoryPath = ResolveDataDirectory(runningInContainer);
+Directory.CreateDirectory(dataDirectoryPath);
+
+var configFilePath = Path.Combine(dataDirectoryPath, "carbudget.config.json");
+var fileConfig = LoadFileConfig(configFilePath);
+
+var environmentRegion = Environment.GetEnvironmentVariable("region");
+var effectiveRegion = NormalizeRegion(!string.IsNullOrWhiteSpace(environmentRegion)
+    ? environmentRegion
+    : fileConfig?.Region);
 
 var webUiPort = Environment.GetEnvironmentVariable("webui_port");
 if (!string.IsNullOrWhiteSpace(webUiPort))
@@ -25,24 +38,33 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 builder.Services.AddHttpClient();
 
-var databaseProvider = builder.Configuration["Database:Provider"]
-    ?? Environment.GetEnvironmentVariable("CARBUDGET_DB_PROVIDER")
-    ?? "Sqlite";
+// Database connection: env vars take priority (Docker/advanced), otherwise default SQLite in data dir.
+var databaseProvider = Environment.GetEnvironmentVariable("CARBUDGET_DB_PROVIDER") ?? "Sqlite";
 
-var defaultSqliteConnectionString = runningInContainer
-    ? "Data Source=/app/data/carbudget.db"
-    : "Data Source=carbudget.db";
+var defaultSqliteConnectionString = $"Data Source={Path.Combine(dataDirectoryPath, "carbudget.db")}";
 
-var sqliteConnectionString = builder.Configuration.GetConnectionString("SqliteConnection")
+var sqliteConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__SqliteConnection")
     ?? defaultSqliteConnectionString;
 
-if (runningInContainer && string.Equals(sqliteConnectionString.Trim(), "Data Source=carbudget.db", StringComparison.OrdinalIgnoreCase))
+var postgresConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__PostgresConnection")
+    ?? "Host=localhost;Port=5432;Database=carbudget;Username=postgres;Password=postgres";
+
+// When the region env var is provided (e.g. Docker) and no config file exists yet,
+// write one automatically so the setup page is skipped on every start.
+if (!string.IsNullOrWhiteSpace(environmentRegion) && !File.Exists(configFilePath))
 {
-    sqliteConnectionString = "Data Source=/app/data/carbudget.db";
+    try
+    {
+        File.WriteAllText(configFilePath, JsonSerializer.Serialize(
+            new AppFileConfig { Region = effectiveRegion },
+            new JsonSerializerOptions { WriteIndented = true }));
+    }
+    catch { }
 }
 
-var postgresConnectionString = builder.Configuration.GetConnectionString("PostgresConnection")
-    ?? "Host=localhost;Port=5432;Database=carbudget;Username=postgres;Password=postgres";
+var setupRequiredCheck = () =>
+    !File.Exists(configFilePath)
+    && string.IsNullOrWhiteSpace(environmentRegion);
 
 builder.Services.AddDbContext<CarBudgetDbContext>(options =>
 {
@@ -72,6 +94,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+VehiclesController.Region = effectiveRegion;
+VehiclesController.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
+VehiclesController.DebugSaveHtml = fileConfig?.Debug?.SavePlaywrightHtml ?? false;
+
 static string NormalizeRegion(string? value)
 {
     var region = (value ?? string.Empty).Trim().ToLowerInvariant();
@@ -83,9 +109,142 @@ static string NormalizeRegion(string? value)
     };
 }
 
-using (var scope = app.Services.CreateScope())
+var appLogPath = Path.Combine(dataDirectoryPath, "app.log");
+
+void AppLog(string message)
 {
-    var db = scope.ServiceProvider.GetRequiredService<CarBudgetDbContext>();
+    try { File.AppendAllText(appLogPath, $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] {message}\n"); } catch { }
+}
+
+AppLog($"=== Startup ===");
+AppLog($"DataDir:       {dataDirectoryPath}");
+AppLog($"DbProvider:    {databaseProvider}");
+AppLog($"DbPath:        {sqliteConnectionString}");
+AppLog($"Region:        {effectiveRegion}");
+AppLog($"ConfigExists:  {File.Exists(configFilePath)}");
+AppLog($"SetupRequired: {setupRequiredCheck()}");
+AppLog($"Container:     {runningInContainer}");
+AppLog($"DebugSaveHtml: {fileConfig?.Debug?.SavePlaywrightHtml ?? false}");
+
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<CarBudgetDbContext>();
+        InitializeDatabase(db);
+    }
+    AppLog("InitializeDatabase: OK");
+}
+catch (Exception ex)
+{
+    AppLog($"InitializeDatabase: FAILED — {ex}");
+    throw;
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+app.UseCors("AllowAll");
+
+app.UseExceptionHandler(errApp => errApp.Run(async context =>
+{
+    var ex = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+    if (ex != null)
+    {
+        AppLog($"Unhandled exception [{context.Request.Method} {context.Request.Path}]: {ex}");
+    }
+    context.Response.StatusCode = 500;
+    context.Response.ContentType = "application/json";
+    await context.Response.WriteAsync("{\"error\":\"Internal server error\"}");
+}));
+
+if (!app.Environment.IsDevelopment() && !runningInContainer)
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseAuthorization();
+
+app.MapGet("/api/runtime-config.js", (HttpContext context) =>
+{
+    var runtimeRegionSource = Environment.GetEnvironmentVariable("region")
+        ?? LoadFileConfig(configFilePath)?.Region
+        ?? effectiveRegion;
+    var runtimeRegion = NormalizeRegion(runtimeRegionSource);
+    context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
+    return Results.Content($"window.__APP_REGION__ = '{runtimeRegion}';", "application/javascript");
+});
+
+app.MapGet("/api/setup-status", () =>
+{
+    var runtimeConfig = LoadFileConfig(configFilePath);
+    var runtimeRegionSource = Environment.GetEnvironmentVariable("region")
+        ?? runtimeConfig?.Region
+        ?? effectiveRegion;
+
+    return Results.Ok(new AppSetupStatusDto
+    {
+        SetupRequired = setupRequiredCheck(),
+        DataDirectoryPath = dataDirectoryPath,
+        ConfigFilePath = configFilePath,
+        CurrentRegion = NormalizeRegion(runtimeRegionSource),
+        DebugSavePlaywrightHtml = VehiclesController.DebugSaveHtml,
+    });
+});
+
+app.MapGet("/api/app-config", () =>
+{
+    return Results.Ok(new AppConfigurationDto
+    {
+        Region = effectiveRegion,
+        DataDirectoryPath = dataDirectoryPath,
+        ConfigFilePath = configFilePath,
+        DebugSavePlaywrightHtml = VehiclesController.DebugSaveHtml,
+    });
+});
+
+app.MapPost("/api/app-config", (SaveAppConfigurationDto request) =>
+{
+    var normalizedRegion = NormalizeRegion(request.Region);
+
+    var newConfig = new AppFileConfig
+    {
+        Region = normalizedRegion,
+        Debug = new AppFileDebugConfig
+        {
+            SavePlaywrightHtml = request.DebugSavePlaywrightHtml,
+        },
+    };
+
+    File.WriteAllText(configFilePath, JsonSerializer.Serialize(newConfig, new JsonSerializerOptions
+    {
+        WriteIndented = true,
+    }));
+
+    VehiclesController.Region = normalizedRegion;
+    VehiclesController.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
+    VehiclesController.DebugSaveHtml = request.DebugSavePlaywrightHtml;
+
+    AppLog($"Config saved — Region: {normalizedRegion}  DebugSaveHtml: {request.DebugSavePlaywrightHtml}");
+
+    return Results.Ok(new SaveAppConfigurationResultDto
+    {
+        Saved = true,
+        ConfigFilePath = configFilePath,
+    });
+});
+
+app.MapControllers();
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.MapFallbackToFile("index.html");
+
+app.Run();
+
+static void InitializeDatabase(CarBudgetDbContext db)
+{
     db.Database.EnsureCreated();
 
     if (db.Database.IsSqlite())
@@ -149,13 +308,7 @@ using (var scope = app.Services.CreateScope())
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN \"RawHtml\" TEXT NULL;"
         })
         {
-            try
-            {
-                db.Database.ExecuteSqlRaw(statement);
-            }
-            catch
-            {
-            }
+            try { db.Database.ExecuteSqlRaw(statement); } catch { }
         }
     }
     else if (db.Database.IsNpgsql())
@@ -224,31 +377,79 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-if (app.Environment.IsDevelopment())
+static string ResolveDataDirectory(bool runningInContainer)
 {
-    app.MapOpenApi();
+    var configuredPath = Environment.GetEnvironmentVariable("CARBUDGET_DATA_DIR");
+    if (!string.IsNullOrWhiteSpace(configuredPath))
+    {
+        return Path.GetFullPath(configuredPath);
+    }
+
+    if (runningInContainer)
+    {
+        return "/app/data";
+    }
+
+    return Directory.GetCurrentDirectory();
 }
 
-app.UseCors("AllowAll");
-
-if (!app.Environment.IsDevelopment() && !runningInContainer)
+static AppFileConfig? LoadFileConfig(string configFilePath)
 {
-    app.UseHttpsRedirection();
+    try
+    {
+        if (!File.Exists(configFilePath))
+        {
+            return null;
+        }
+
+        var json = File.ReadAllText(configFilePath);
+        return JsonSerializer.Deserialize<AppFileConfig>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+        });
+    }
+    catch
+    {
+        return null;
+    }
 }
 
-app.UseAuthorization();
-
-app.MapGet("/api/runtime-config.js", (HttpContext context) =>
+sealed class AppFileConfig
 {
-    var region = NormalizeRegion(Environment.GetEnvironmentVariable("region"));
-    context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
-    return Results.Content($"window.__APP_REGION__ = '{region}';", "application/javascript");
-});
+    public string? Region { get; set; }
+    public AppFileDebugConfig? Debug { get; set; }
+}
 
-app.MapControllers();
-app.UseDefaultFiles();
-app.UseStaticFiles();
-app.MapFallbackToFile("index.html");
+sealed class AppFileDebugConfig
+{
+    public bool SavePlaywrightHtml { get; set; }
+}
 
-app.Run();
+sealed class AppSetupStatusDto
+{
+    public bool SetupRequired { get; set; }
+    public string DataDirectoryPath { get; set; } = string.Empty;
+    public string ConfigFilePath { get; set; } = string.Empty;
+    public string CurrentRegion { get; set; } = "sweden";
+    public bool DebugSavePlaywrightHtml { get; set; }
+}
 
+sealed class AppConfigurationDto
+{
+    public string Region { get; set; } = "sweden";
+    public string DataDirectoryPath { get; set; } = string.Empty;
+    public string ConfigFilePath { get; set; } = string.Empty;
+    public bool DebugSavePlaywrightHtml { get; set; }
+}
+
+sealed class SaveAppConfigurationDto
+{
+    public string? Region { get; set; }
+    public bool DebugSavePlaywrightHtml { get; set; }
+}
+
+sealed class SaveAppConfigurationResultDto
+{
+    public bool Saved { get; set; }
+    public string ConfigFilePath { get; set; } = string.Empty;
+}

@@ -1,0 +1,120 @@
+.setup-page {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.setup-card {
+  width: min(760px, 100%);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, #2c3e50);
+  border: 1px solid var(--border-color, #d5d7de);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.setup-subtitle {
+  margin-top: 0.4rem;
+  color: var(--text-muted, #5f6672);
+}
+
+.setup-paths {
+  background: var(--bg-stat, #f4f6fa);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin: 1rem 0;
+  color: var(--text-primary, #2c3e50);
+}
+
+.setup-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.setup-form label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.setup-form input,
+.setup-form select {
+  border: 1px solid var(--border-color, #c9ced8);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95rem;
+  background: var(--input-bg, #ffffff);
+  color: var(--text-primary, #2c3e50);
+}
+
+.setup-form button {
+  justify-self: start;
+  border: none;
+  border-radius: 999px;
+  padding: 0.65rem 1rem;
+  background: #1366d6;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.setup-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.setup-fieldset {
+  border: 1px solid var(--border-color, #d5d7de);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin: 0;
+}
+
+.setup-fieldset legend {
+  font-weight: 600;
+  padding: 0 0.4rem;
+  font-size: 0.9rem;
+  color: var(--text-muted, #5f6672);
+}
+
+.setup-checkbox-label {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+  font-weight: 400 !important;
+  cursor: pointer;
+}
+
+.setup-checkbox-label input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 4px !important;
+  padding: 0 !important;
+  flex-shrink: 0;
+}
+
+.setup-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted, #5f6672);
+  line-height: 1.4;
+}
+
+.setup-hint code {
+  font-family: monospace;
+  background: var(--bg-stat, #f4f6fa);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.88em;
+}
+
+.setup-error {
+  color: #a91919;
+  margin-top: 0.8rem;
+}
+
+.setup-success {
+  color: #0b7f41;
+  margin-top: 0.8rem;
+}

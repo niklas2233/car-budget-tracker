@@ -4,12 +4,13 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { expenseApi, vehicleApi } from '../api';
 import { CreateExpenseDto, ExpenseType, Vehicle } from '../types';
+import { appCurrency, appLocale } from '../currency';
 import './VehicleForm.css';
 
 const MAX_EXPENSE_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
 const MAX_EXPENSE_PHOTO_COUNT = 6;
 
-const formatMileage = (value: number) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(value);
+const formatMileage = (value: number) => new Intl.NumberFormat(appLocale, { maximumFractionDigits: 0 }).format(value);
 
 type SparePartLine = {
 	id: number;
@@ -38,7 +39,7 @@ const parseSparePartsBreakdownFromNotes = (notes: string): SparePartLine[] => {
 			continue;
 		}
 
-		const itemMatch = line.match(/^-\s*(.+):\s*(-?\d+(?:\.\d+)?)\s*SEK$/i);
+		const itemMatch = line.match(/^-\s*(.+):\s*(-?\d+(?:\.\d+)?)\s*[A-Z]{3}$/i);
 		if (!itemMatch) {
 			continue;
 		}
@@ -57,8 +58,8 @@ const buildPartsBreakdownNotes = (existingNotes: string, parts: SparePartLine[],
 	const cleanNotes = stripPartsBreakdownFromNotes(existingNotes.trim());
 	const breakdownLines = [
 		'Parts breakdown:',
-		...parts.map((part) => `- ${part.name}: ${part.cost.toFixed(2)} SEK`),
-		`Shipping: ${shipping.toFixed(2)} SEK`,
+		...parts.map((part) => `- ${part.name}: ${part.cost.toFixed(2)} ${appCurrency}`),
+		`Shipping: ${shipping.toFixed(2)} ${appCurrency}`,
 	];
 	const breakdown = breakdownLines.join('\n');
 
@@ -496,8 +497,8 @@ const ExpenseForm: React.FC = () => {
 							</div>
 						))}
 						<div className="spare-parts-summary">
-							<p><strong>Parts Total:</strong> {sparePartsTotal.toFixed(2)} SEK</p>
-							<p><strong>Shipping / Remaining:</strong> {sparePartsShippingRemainder.toFixed(2)} SEK</p>
+							<p><strong>Parts Total:</strong> {sparePartsTotal.toFixed(2)} {appCurrency}</p>
+							<p><strong>Shipping / Remaining:</strong> {sparePartsShippingRemainder.toFixed(2)} {appCurrency}</p>
 						</div>
 					</div>
 				)}
@@ -514,7 +515,7 @@ const ExpenseForm: React.FC = () => {
 						/>
 					</div>
 					<div className="form-group">
-						<label htmlFor="shipping">Shipping (SEK)</label>
+						<label htmlFor="shipping">Shipping ({appCurrency})</label>
 						<input
 							type="number"
 							id="shipping"

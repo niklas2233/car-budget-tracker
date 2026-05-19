@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { vehicleApi } from '../api';
-import { formatCurrency, formatWholeCurrency } from '../currency';
+import { appLocale, formatCurrency, formatWholeCurrency } from '../currency';
 import { Vehicle, VehicleExportPackageDto } from '../types';
 import './Dashboard.css';
 
@@ -350,7 +350,7 @@ const Dashboard: React.FC = () => {
 				  <p><strong>VIN:</strong> {vehicle.vin}</p>
 				)}
 				{vehicle.mileage && (
-				  <p><strong>Mileage:</strong> {vehicle.mileage.toLocaleString('sv-SE')} km</p>
+				  <p><strong>Mileage:</strong> {vehicle.mileage.toLocaleString(appLocale)} km</p>
 				)}
 			  </div>
 

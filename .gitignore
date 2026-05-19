@@ -6,6 +6,12 @@ build/
 *.dll
 *.exe
 *.pdb
+frontend/backend/
+src/CarBudget.Api/wwwroot/
+/CarBudget.Api/
+
+# Claude Code internal
+.claude/
 
 # Node/npm
 node_modules/

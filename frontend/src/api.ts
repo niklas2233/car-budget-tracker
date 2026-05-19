@@ -1,5 +1,17 @@
 import axios from 'axios';
-import { Vehicle, CreateVehicleDto, Expense, CreateExpenseDto, VehicleLookupDto, VehicleLookupCacheDto, VehicleExportPackageDto } from './types';
+import {
+  Vehicle,
+  CreateVehicleDto,
+  Expense,
+  CreateExpenseDto,
+  VehicleLookupDto,
+  VehicleLookupCacheDto,
+  VehicleExportPackageDto,
+  AppSetupStatusDto,
+  AppConfigurationDto,
+  SaveAppConfigurationDto,
+  SaveAppConfigurationResultDto,
+} from './types';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
@@ -55,4 +67,10 @@ export const expenseApi = {
   create: (expense: CreateExpenseDto) => api.post<Expense>('/expenses', expense),
   update: (id: number, expense: Partial<CreateExpenseDto>) => api.put(`/expenses/${id}`, expense),
   delete: (id: number) => api.delete(`/expenses/${id}`),
+};
+
+export const appConfigApi = {
+  getSetupStatus: () => api.get<AppSetupStatusDto>('/setup-status'),
+  getConfig: () => api.get<AppConfigurationDto>('/app-config'),
+  saveConfig: (payload: SaveAppConfigurationDto) => api.post<SaveAppConfigurationResultDto>('/app-config', payload),
 };

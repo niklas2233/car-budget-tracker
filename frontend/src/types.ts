@@ -148,3 +148,28 @@ export enum ExpenseType {
   SpareParts = 10,
   Other = 9
 }
+
+export interface AppSetupStatusDto {
+  setupRequired: boolean;
+  dataDirectoryPath: string;
+  configFilePath: string;
+  currentRegion: string;
+  debugSavePlaywrightHtml: boolean;
+}
+
+export interface AppConfigurationDto {
+  region: string;
+  dataDirectoryPath: string;
+  configFilePath: string;
+  debugSavePlaywrightHtml: boolean;
+}
+
+export interface SaveAppConfigurationDto {
+  region: string;
+  debugSavePlaywrightHtml?: boolean;
+}
+
+export interface SaveAppConfigurationResultDto {
+  saved: boolean;
+  configFilePath: string;
+}
