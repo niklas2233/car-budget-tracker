@@ -182,6 +182,7 @@ app.MapGet("/api/setup-status", () =>
         ConfigFilePath = configFilePath,
         CurrentRegion = VehiclesController.Region,
         DebugSavePlaywrightHtml = VehiclesController.DebugSaveHtml,
+        IsContainer = runningInContainer,
     });
 });
 
@@ -423,6 +424,7 @@ sealed class AppSetupStatusDto
     public string ConfigFilePath { get; set; } = string.Empty;
     public string CurrentRegion { get; set; } = "sweden";
     public bool DebugSavePlaywrightHtml { get; set; }
+    public bool IsContainer { get; set; }
 }
 
 sealed class AppConfigurationDto

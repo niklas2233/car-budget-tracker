@@ -155,6 +155,7 @@ export interface AppSetupStatusDto {
   configFilePath: string;
   currentRegion: string;
   debugSavePlaywrightHtml: boolean;
+  isContainer: boolean;
 }
 
 export interface AppConfigurationDto {

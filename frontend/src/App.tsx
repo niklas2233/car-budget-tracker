@@ -59,7 +59,9 @@ function App() {
             <nav className="App-nav" aria-label="Primary navigation">
               <Link to="/" className="App-nav-link">Dashboard</Link>
               <Link to="/economy" className="App-nav-link">Economy</Link>
-              <Link to="/settings" className="App-nav-link">Settings</Link>
+              {!setupStatus.isContainer && (
+                <Link to="/settings" className="App-nav-link">Settings</Link>
+              )}
             </nav>
           </div>
           <button
@@ -98,17 +100,19 @@ function App() {
                 <Route path="/vehicles/:vehicleKey/expenses/:expenseId/edit" element={<ExpenseForm />} />
                 <Route path="/cached-plates" element={<LookupCachePage />} />
                 <Route path="/cached-plates/:licensePlate" element={<LookupCachePage />} />
-                <Route
-                  path="/settings"
-                  element={
-                    <SetupPage
-                      setupStatus={setupStatus}
-                      onSaved={() => {
-                        window.location.replace('/');
-                      }}
-                    />
-                  }
-                />
+                {!setupStatus.isContainer && (
+                  <Route
+                    path="/settings"
+                    element={
+                      <SetupPage
+                        setupStatus={setupStatus}
+                        onSaved={() => {
+                          window.location.replace('/');
+                        }}
+                      />
+                    }
+                  />
+                )}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </>
             )}
