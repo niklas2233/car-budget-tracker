@@ -75,14 +75,14 @@ The port mapping updates automatically to match.
 
 Set `region` in `docker-compose.yml` to control currency, distance unit, and number formatting. Defaults to `sweden` if omitted.
 
-| Region | Value | Currency | Distance | Week start | Car.info lookup |
-|--------|-------|----------|----------|------------|-----------------|
-| Sweden | `sweden` | SEK | km | Monday | Yes |
-| Norway | `norway` | NOK | km | Monday | Yes |
-| Europe | `europe` | EUR | km | Monday | No |
-| America | `america` | USD | km | Sunday | No |
-| USA | `usa` | USD | miles | Sunday | No |
-| Great Britain | `gb` | GBP | miles | Monday | No |
+| Region | Value | Currency | Distance |
+|--------|-------|----------|----------|
+| Sweden | `sweden` | SEK | km |
+| Norway | `norway` | NOK | km |
+| Europe | `europe` | EUR | km |
+| America | `america` | USD | km |
+| USA | `usa` | USD | miles |
+| Great Britain | `gb` | GBP | miles |
 
 You can also override the currency independently with the `currency` env var (any string is accepted):
 
