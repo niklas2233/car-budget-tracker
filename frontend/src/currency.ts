@@ -19,7 +19,7 @@ const activeRegion = normalizeRegion(window.__APP_REGION__ ?? process.env.REACT_
 const regionSettings = SUPPORTED_REGIONS[activeRegion];
 
 export const appRegion = activeRegion;
-export const appCurrency = regionSettings.currency;
+export const appCurrency = window.__APP_CURRENCY__ ?? regionSettings.currency;
 export const appLocale = regionSettings.locale;
 
 export const formatCurrency = (amount: number, options?: Intl.NumberFormatOptions) => {

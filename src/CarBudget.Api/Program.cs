@@ -94,9 +94,15 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+var debugEnv = Environment.GetEnvironmentVariable("debug");
+var debugFromEnv = string.Equals(debugEnv, "true", StringComparison.OrdinalIgnoreCase)
+    || string.Equals(debugEnv, "1", StringComparison.OrdinalIgnoreCase);
+
+var currencyEnv = Environment.GetEnvironmentVariable("currency")?.Trim().ToUpperInvariant();
+
 VehiclesController.Region = effectiveRegion;
 VehiclesController.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
-VehiclesController.DebugSaveHtml = fileConfig?.Debug?.SavePlaywrightHtml ?? false;
+VehiclesController.DebugSaveHtml = debugFromEnv || (fileConfig?.Debug?.SavePlaywrightHtml ?? false);
 
 static string NormalizeRegion(string? value)
 {
@@ -124,7 +130,8 @@ AppLog($"Region:        {effectiveRegion}");
 AppLog($"ConfigExists:  {File.Exists(configFilePath)}");
 AppLog($"SetupRequired: {setupRequiredCheck()}");
 AppLog($"Container:     {runningInContainer}");
-AppLog($"DebugSaveHtml: {fileConfig?.Debug?.SavePlaywrightHtml ?? false}");
+AppLog($"DebugSaveHtml: {VehiclesController.DebugSaveHtml}");
+AppLog($"CurrencyEnv:   {currencyEnv ?? "(not set, derived from region)"}");
 
 try
 {
@@ -170,7 +177,10 @@ app.UseAuthorization();
 app.MapGet("/api/runtime-config.js", (HttpContext context) =>
 {
     context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
-    return Results.Content($"window.__APP_REGION__ = '{VehiclesController.Region}';", "application/javascript");
+    var js = $"window.__APP_REGION__ = '{VehiclesController.Region}';";
+    if (!string.IsNullOrEmpty(currencyEnv))
+        js += $"\nwindow.__APP_CURRENCY__ = '{currencyEnv}';";
+    return Results.Content(js, "application/javascript");
 });
 
 app.MapGet("/api/setup-status", () =>

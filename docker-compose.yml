@@ -10,6 +10,8 @@ services:
     environment:
       webui_port: 2233
       region: sweden
+      # currency: SEK   # override currency symbol (default derived from region: SEK/NOK/EUR)
+      # debug: "false"  # set to "true" to save Playwright HTML on each lookup
     volumes:
       - ./data:/app/data
     restart: unless-stopped
