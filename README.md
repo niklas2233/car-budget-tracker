@@ -71,22 +71,28 @@ environment:
 
 The port mapping updates automatically to match.
 
-#### Choosing Region and Currency
+#### Choosing Region
 
-Set `region` to control frontend currency formatting:
+Set `region` in `docker-compose.yml` to control currency, distance unit, and number formatting. Defaults to `sweden` if omitted.
 
-- `sweden` -> SEK
-- `norway` -> NOK
-- `europe` -> EUR
+| Region | Value | Currency | Distance | Week start | Car.info lookup |
+|--------|-------|----------|----------|------------|-----------------|
+| Sweden | `sweden` | SEK | km | Monday | Yes |
+| Norway | `norway` | NOK | km | Monday | Yes |
+| Europe | `europe` | EUR | km | Monday | No |
+| America | `america` | USD | km | Sunday | No |
+| USA | `usa` | USD | miles | Sunday | No |
+| Great Britain | `gb` | GBP | miles | Monday | No |
 
-Docker example:
+You can also override the currency independently with the `currency` env var (any string is accepted):
 
-```powershell
-$env:region='norway'
-docker compose up -d
+```yaml
+environment:
+  region: europe
+  currency: CHF   # override to Swiss Franc
 ```
 
-If omitted, the app defaults to `sweden`. If you change `region` later, restart the container:
+If you change `region` later, restart the container:
 
 ```powershell
 docker compose restart app
@@ -109,7 +115,7 @@ volumes:
 1. Open a terminal in the project root directory
 2. Run the API:
    ```powershell
-   $env:region='europe'   # sweden | norway | europe
+   $env:region='europe'   # sweden | norway | europe | america | usa | gb
    cd src/CarBudget.Api
    dotnet run
    ```
