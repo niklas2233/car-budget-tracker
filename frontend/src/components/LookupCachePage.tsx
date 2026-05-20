@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { vehicleApi } from '../api';
 import { VehicleLookupCacheDto } from '../types';
+import { formatDistance } from '../currency';
 import './LookupCachePage.css';
 
 const formatDateTime = (value?: string) => {
@@ -189,7 +190,7 @@ const LookupCachePage: React.FC = () => {
                 <>
                   <div className="lookup-cache-meta">
                     <div><span>Color</span><strong>{entry.colorName || 'Unknown'}</strong></div>
-                    <div><span>Mileage</span><strong>{entry.mileageKm != null ? `${entry.mileageKm.toLocaleString('sv-SE')} km` : 'Unknown'}</strong></div>
+                    <div><span>Mileage</span><strong>{entry.mileageKm != null ? formatDistance(entry.mileageKm) : 'Unknown'}</strong></div>
                     <div><span>Fuel</span><strong>{entry.fuelType || 'Unknown'}</strong></div>
                     <div><span>Gearbox</span><strong>{entry.gearbox || 'Unknown'}</strong></div>
                     <div><span>Drive train</span><strong>{entry.driveTrain || 'Unknown'}</strong></div>

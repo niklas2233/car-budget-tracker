@@ -59,13 +59,16 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
               <option value="sweden">Sweden</option>
               <option value="norway">Norway</option>
               <option value="europe">Europe</option>
+              <option value="america">America</option>
+              <option value="usa">USA</option>
+              <option value="gb">Great Britain</option>
             </select>
           </label>
 
           <label>
             Currency override
             <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-              <option value="">Region default (SEK / NOK / EUR)</option>
+              <option value="">Region default (SEK / NOK / EUR / USD)</option>
               <option value="SEK">SEK — Swedish Krona</option>
               <option value="NOK">NOK — Norwegian Krone</option>
               <option value="EUR">EUR — Euro</option>

@@ -4,7 +4,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { expenseApi, vehicleApi } from '../api';
 import { CreateExpenseDto, ExpenseType, Vehicle } from '../types';
-import { appCurrency, appLocale } from '../currency';
+import { appCurrency, appLocale, calendarStartDay, distanceLabel, kmToDisplayDistance, displayDistanceToKm } from '../currency';
 import './VehicleForm.css';
 
 const MAX_EXPENSE_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
@@ -137,7 +137,7 @@ const ExpenseForm: React.FC = () => {
 				setSpareParts(parsedParts.length > 0 ? parsedParts : [{ id: 1, name: '', cost: 0 }]);
 			}
 
-			if (e.mileage) setMileageInput(formatMileage(e.mileage));
+			if (e.mileage) setMileageInput(formatMileage(kmToDisplayDistance(e.mileage)));
 		} catch (error) {
 			console.error('Error loading expense:', error);
 		}
@@ -165,7 +165,7 @@ const ExpenseForm: React.FC = () => {
 			const parsedMileage = parseInt(numericOnly, 10);
 			setFormData({
 				...formData,
-				mileage: parsedMileage,
+				mileage: displayDistanceToKm(parsedMileage),
 			});
 			setMileageInput(formatMileage(parsedMileage));
 			return;
@@ -407,6 +407,7 @@ const ExpenseForm: React.FC = () => {
 							dropdownMode="select"
 							maxDate={new Date()}
 							placeholderText="Select date"
+							calendarStartDay={calendarStartDay}
 							className="datepicker-input"
 							required
 						/>
@@ -531,7 +532,7 @@ const ExpenseForm: React.FC = () => {
 						)}
 					</div>
 					<div className="form-group">
-						<label htmlFor="mileage">Mileage (km)</label>
+						<label htmlFor="mileage">Mileage ({distanceLabel})</label>
 						<input
 							type="text"
 							id="mileage"

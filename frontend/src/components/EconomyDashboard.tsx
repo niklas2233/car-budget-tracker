@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { expenseApi, getApiErrorMessage, vehicleApi } from '../api';
-import { formatCurrency } from '../currency';
+import { formatCurrency, calendarStartDay } from '../currency';
 import { Expense, Vehicle } from '../types';
 import './EconomyDashboard.css';
 
@@ -203,6 +203,7 @@ const EconomyDashboard: React.FC = () => {
             dropdownMode="select"
             maxDate={endDate ?? undefined}
             placeholderText="Select date"
+            calendarStartDay={calendarStartDay}
             className="datepicker-input"
           />
         </label>
@@ -218,6 +219,7 @@ const EconomyDashboard: React.FC = () => {
             minDate={startDate ?? undefined}
             maxDate={new Date()}
             placeholderText="Select date"
+            calendarStartDay={calendarStartDay}
             className="datepicker-input"
           />
         </label>

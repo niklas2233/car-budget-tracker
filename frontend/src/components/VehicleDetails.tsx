@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { vehicleApi, expenseApi, getApiErrorMessage } from '../api';
-import { formatCurrency, formatWholeCurrency } from '../currency';
+import { formatCurrency, appLocale, formatDistance, distanceLabel, supportsCarInfoLookup } from '../currency';
 import { Vehicle, Expense } from '../types';
 import './VehicleDetails.css';
 
@@ -100,7 +100,7 @@ const VehicleDetails: React.FC = () => {
   };
 
   const formatPurchasePrice = (amount: number) => {
-	return formatWholeCurrency(amount);
+	return new Intl.NumberFormat(appLocale, { maximumFractionDigits: 0 }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
@@ -148,13 +148,15 @@ const VehicleDetails: React.FC = () => {
 		  <button className="btn-secondary" onClick={() => navigate(`/vehicles/${vehicle.licensePlate ? encodeURIComponent(vehicle.licensePlate) : vehicle.id}/edit`)}>
 			Edit Vehicle
 		  </button>
-		  <button
-			className="btn-secondary"
-			onClick={handleRefreshCarInfo}
-			disabled={refreshingCarInfo || !vehicle.licensePlate}
-		  >
-			{refreshingCarInfo ? 'Refreshing Car.info...' : 'Update Car.info Data'}
-		  </button>
+		  {supportsCarInfoLookup && (
+			<button
+			  className="btn-secondary"
+			  onClick={handleRefreshCarInfo}
+			  disabled={refreshingCarInfo || !vehicle.licensePlate}
+			>
+			  {refreshingCarInfo ? 'Refreshing Car.info...' : 'Update Car.info Data'}
+			</button>
+		  )}
 		  <button className="btn-primary" onClick={() => navigate(`/vehicles/${vehicle.licensePlate ? encodeURIComponent(vehicle.licensePlate) : vehicle.id}/expenses/new`)}>
 			Add Expense
 		  </button>
@@ -191,7 +193,7 @@ const VehicleDetails: React.FC = () => {
 		  {vehicle.mileage && (
 			<div className="info-item">
 			  <span className="info-label">Mileage</span>
-			  <span className="info-value">{vehicle.mileage.toLocaleString('sv-SE')} km</span>
+			  <span className="info-value">{formatDistance(vehicle.mileage)}</span>
 			</div>
 		  )}
 		  <div className="info-item">
@@ -246,7 +248,7 @@ const VehicleDetails: React.FC = () => {
 				  <th>Description</th>
 				  <th>Amount</th>
 				  <th>Vendor</th>
-				  <th>Mileage (km)</th>
+				  <th>Mileage ({distanceLabel})</th>
 				  <th>Actions</th>
 				</tr>
 			  </thead>
@@ -288,7 +290,7 @@ const VehicleDetails: React.FC = () => {
 					</td>
 					<td className="amount">{formatCurrency(expense.type === 10 ? expense.amount : expense.amount + (expense.shipping ?? 0))}</td>
 					<td>{expense.vendor || '-'}</td>
-					<td>{expense.mileage ? expense.mileage.toLocaleString('sv-SE') : '-'}</td>
+					<td>{expense.mileage ? formatDistance(expense.mileage) : '-'}</td>
 					<td className="expense-actions">
 					  <div className="expense-actions-inner">
 						<button

@@ -4,7 +4,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { getApiErrorMessage, vehicleApi } from '../api';
 import { CreateVehicleDto } from '../types';
-import { appCurrency, appLocale } from '../currency';
+import { appCurrency, appLocale, calendarStartDay, distanceLabel, kmToDisplayDistance, displayDistanceToKm, supportsCarInfoLookup } from '../currency';
 import './VehicleForm.css';
 
 const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
@@ -423,7 +423,7 @@ const VehicleForm: React.FC = () => {
 					sellPrice: vehicle.sellPrice,
 					sellDate: vehicle.sellDate ? vehicle.sellDate.split('T')[0] : undefined,
 				});
-				setMileageInput(vehicle.mileage ? formatMileage(vehicle.mileage) : '');
+				setMileageInput(vehicle.mileage ? formatMileage(kmToDisplayDistance(vehicle.mileage)) : '');
 			} catch (error) {
 				console.error('Error loading vehicle:', error);
 				alert('Failed to load vehicle for editing');
@@ -471,7 +471,7 @@ const VehicleForm: React.FC = () => {
 	  const parsedMileage = parseInt(numericOnly, 10);
 	  setFormData({
 		...formData,
-		mileage: parsedMileage,
+		mileage: displayDistanceToKm(parsedMileage),
 	  });
 	  setMileageInput(formatMileage(parsedMileage));
 	  return;
@@ -517,7 +517,7 @@ const VehicleForm: React.FC = () => {
 	  }));
 
 	  if (lookup.mileageKm != null) {
-		setMileageInput(formatMileage(lookup.mileageKm));
+		setMileageInput(formatMileage(kmToDisplayDistance(lookup.mileageKm)));
 	  }
 
 	  setLookupMessage('Vehicle data fetched from Car.info.');
@@ -750,14 +750,16 @@ const VehicleForm: React.FC = () => {
 			  value={formData.licensePlate}
 			  onChange={handleChange}
 			/>
-			<button
-			  type="button"
-			  className="btn-secondary plate-lookup-btn"
-			  onClick={handleLookupByLicensePlate}
-			  disabled={lookupLoading}
-			>
-			  {lookupLoading ? 'Fetching...' : 'Fetch from plate'}
-			</button>
+			{supportsCarInfoLookup && (
+			  <button
+				type="button"
+				className="btn-secondary plate-lookup-btn"
+				onClick={handleLookupByLicensePlate}
+				disabled={lookupLoading}
+			  >
+				{lookupLoading ? 'Fetching...' : 'Fetch from plate'}
+			  </button>
+			)}
 			{lookupMessage && <small className="lookup-message">{lookupMessage}</small>}
 		  </div>
 		</div>
@@ -790,6 +792,7 @@ const VehicleForm: React.FC = () => {
 			  dropdownMode="select"
 			  maxDate={new Date()}
 			  placeholderText="Select date"
+			  calendarStartDay={calendarStartDay}
 			  className="datepicker-input"
 			  required
 			/>
@@ -798,7 +801,7 @@ const VehicleForm: React.FC = () => {
 
 		<div className="form-row">
 		  <div className="form-group">
-			<label htmlFor="mileage">Current Mileage (km)</label>
+			<label htmlFor="mileage">Current Mileage ({distanceLabel})</label>
 			<input
 			  type="text"
 			  id="mileage"
@@ -868,6 +871,7 @@ const VehicleForm: React.FC = () => {
 			  dropdownMode="select"
 			  maxDate={new Date()}
 			  placeholderText="Select date"
+			  calendarStartDay={calendarStartDay}
 			  className="datepicker-input"
 			  isClearable
 			/>

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { vehicleApi } from '../api';
-import { appLocale, formatCurrency, formatWholeCurrency } from '../currency';
+import { formatCurrency, formatWholeCurrency, formatDistance, supportsCarInfoLookup } from '../currency';
 import { Vehicle, VehicleExportPackageDto } from '../types';
 import './Dashboard.css';
 
@@ -273,9 +273,11 @@ const Dashboard: React.FC = () => {
 							Cancel Export
 						</button>
 					)}
-					<button className="btn-secondary" onClick={() => navigate('/cached-plates')}>
-						Cached Plates
-					</button>
+					{supportsCarInfoLookup && (
+						<button className="btn-secondary" onClick={() => navigate('/cached-plates')}>
+							Cached Plates
+						</button>
+					)}
 					<button className="btn-primary" onClick={() => navigate('/vehicles/new')}>
 						Add New Vehicle
 					</button>
@@ -350,7 +352,7 @@ const Dashboard: React.FC = () => {
 				  <p><strong>VIN:</strong> {vehicle.vin}</p>
 				)}
 				{vehicle.mileage && (
-				  <p><strong>Mileage:</strong> {vehicle.mileage.toLocaleString(appLocale)} km</p>
+				  <p><strong>Mileage:</strong> {formatDistance(vehicle.mileage)}</p>
 				)}
 			  </div>
 

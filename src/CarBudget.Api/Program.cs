@@ -113,9 +113,12 @@ static string NormalizeRegion(string? value)
     var region = (value ?? string.Empty).Trim().ToLowerInvariant();
     return region switch
     {
-        "norway" => "norway",
-        "europe" => "europe",
-        _ => "sweden"
+        "norway"  => "norway",
+        "europe"  => "europe",
+        "america" => "america",
+        "usa"     => "usa",
+        "gb"      => "gb",
+        _         => "sweden"
     };
 }
 
