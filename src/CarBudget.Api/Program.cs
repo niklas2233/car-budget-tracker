@@ -100,6 +100,10 @@ var debugFromEnv = string.Equals(debugEnv, "true", StringComparison.OrdinalIgnor
 
 var currencyEnv = Environment.GetEnvironmentVariable("currency")?.Trim().ToUpperInvariant();
 
+// activeCurrency is mutable so the POST handler can update it at runtime.
+// Env var takes priority; falls back to config file, then null (= derive from region in frontend).
+string? activeCurrency = currencyEnv ?? fileConfig?.Currency?.Trim().ToUpperInvariant();
+
 VehiclesController.Region = effectiveRegion;
 VehiclesController.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
 VehiclesController.DebugSaveHtml = debugFromEnv || (fileConfig?.Debug?.SavePlaywrightHtml ?? false);
@@ -131,7 +135,7 @@ AppLog($"ConfigExists:  {File.Exists(configFilePath)}");
 AppLog($"SetupRequired: {setupRequiredCheck()}");
 AppLog($"Container:     {runningInContainer}");
 AppLog($"DebugSaveHtml: {VehiclesController.DebugSaveHtml}");
-AppLog($"CurrencyEnv:   {currencyEnv ?? "(not set, derived from region)"}");
+AppLog($"Currency:      {activeCurrency ?? "(derived from region)"}");
 
 try
 {
@@ -178,8 +182,8 @@ app.MapGet("/api/runtime-config.js", (HttpContext context) =>
 {
     context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
     var js = $"window.__APP_REGION__ = '{VehiclesController.Region}';";
-    if (!string.IsNullOrEmpty(currencyEnv))
-        js += $"\nwindow.__APP_CURRENCY__ = '{currencyEnv}';";
+    if (!string.IsNullOrEmpty(activeCurrency))
+        js += $"\nwindow.__APP_CURRENCY__ = '{activeCurrency}';";
     return Results.Content(js, "application/javascript");
 });
 
@@ -191,6 +195,7 @@ app.MapGet("/api/setup-status", () =>
         DataDirectoryPath = dataDirectoryPath,
         ConfigFilePath = configFilePath,
         CurrentRegion = VehiclesController.Region,
+        CurrentCurrency = activeCurrency,
         DebugSavePlaywrightHtml = VehiclesController.DebugSaveHtml,
         IsContainer = runningInContainer,
     });
@@ -210,10 +215,14 @@ app.MapGet("/api/app-config", () =>
 app.MapPost("/api/app-config", (SaveAppConfigurationDto request) =>
 {
     var normalizedRegion = NormalizeRegion(request.Region);
+    var normalizedCurrency = string.IsNullOrWhiteSpace(request.Currency)
+        ? null
+        : request.Currency.Trim().ToUpperInvariant();
 
     var newConfig = new AppFileConfig
     {
         Region = normalizedRegion,
+        Currency = normalizedCurrency,
         Debug = new AppFileDebugConfig
         {
             SavePlaywrightHtml = request.DebugSavePlaywrightHtml,
@@ -228,8 +237,9 @@ app.MapPost("/api/app-config", (SaveAppConfigurationDto request) =>
     VehiclesController.Region = normalizedRegion;
     VehiclesController.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
     VehiclesController.DebugSaveHtml = request.DebugSavePlaywrightHtml;
+    activeCurrency = normalizedCurrency;
 
-    AppLog($"Config saved — Region: {normalizedRegion}  DebugSaveHtml: {request.DebugSavePlaywrightHtml}");
+    AppLog($"Config saved — Region: {normalizedRegion}  Currency: {normalizedCurrency ?? "(region default)"}  DebugSaveHtml: {request.DebugSavePlaywrightHtml}");
 
     return Results.Ok(new SaveAppConfigurationResultDto
     {
@@ -419,6 +429,7 @@ static AppFileConfig? LoadFileConfig(string configFilePath)
 sealed class AppFileConfig
 {
     public string? Region { get; set; }
+    public string? Currency { get; set; }
     public AppFileDebugConfig? Debug { get; set; }
 }
 
@@ -433,6 +444,7 @@ sealed class AppSetupStatusDto
     public string DataDirectoryPath { get; set; } = string.Empty;
     public string ConfigFilePath { get; set; } = string.Empty;
     public string CurrentRegion { get; set; } = "sweden";
+    public string? CurrentCurrency { get; set; }
     public bool DebugSavePlaywrightHtml { get; set; }
     public bool IsContainer { get; set; }
 }
@@ -448,6 +460,7 @@ sealed class AppConfigurationDto
 sealed class SaveAppConfigurationDto
 {
     public string? Region { get; set; }
+    public string? Currency { get; set; }
     public bool DebugSavePlaywrightHtml { get; set; }
 }
 

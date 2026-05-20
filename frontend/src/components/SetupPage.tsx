@@ -10,6 +10,7 @@ type SetupPageProps = {
 
 const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
   const [region, setRegion] = useState(setupStatus.currentRegion || 'sweden');
+  const [currency, setCurrency] = useState(setupStatus.currentCurrency || '');
   const [debugSavePlaywrightHtml, setDebugSavePlaywrightHtml] = useState(setupStatus.debugSavePlaywrightHtml || false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -24,6 +25,7 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
     try {
       await appConfigApi.saveConfig({
         region,
+        currency: currency || undefined,
         debugSavePlaywrightHtml,
       });
 
@@ -57,6 +59,20 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
               <option value="sweden">Sweden</option>
               <option value="norway">Norway</option>
               <option value="europe">Europe</option>
+            </select>
+          </label>
+
+          <label>
+            Currency override
+            <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+              <option value="">Region default (SEK / NOK / EUR)</option>
+              <option value="SEK">SEK — Swedish Krona</option>
+              <option value="NOK">NOK — Norwegian Krone</option>
+              <option value="EUR">EUR — Euro</option>
+              <option value="DKK">DKK — Danish Krone</option>
+              <option value="GBP">GBP — British Pound</option>
+              <option value="USD">USD — US Dollar</option>
+              <option value="CHF">CHF — Swiss Franc</option>
             </select>
           </label>
 
