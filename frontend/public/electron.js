@@ -362,6 +362,7 @@ function isNewerVersion(latest, current) {
 
 function checkForUpdates() {
   const currentVersion = app.getVersion();
+  const isPortable = !!process.env.PORTABLE_EXECUTABLE_DIR;
   const options = {
     hostname: 'api.github.com',
     path: '/repos/niklas2233/car-budget-tracker/releases/latest',
@@ -376,13 +377,18 @@ function checkForUpdates() {
         const release = JSON.parse(data);
         const latestTag = release.tag_name || '';
         const latestVersion = latestTag.replace(/^v/, '');
-        log(`checkForUpdates — current=${currentVersion} latest=${latestVersion}`);
+        log(`checkForUpdates — current=${currentVersion} latest=${latestVersion} portable=${isPortable}`);
         if (latestVersion && isNewerVersion(latestVersion, currentVersion)) {
           log(`Update available: ${latestVersion}`);
+          const installerAsset = (release.assets || []).find(
+            a => a.name.includes('Setup') && a.name.endsWith('.exe')
+          );
           if (mainWindow) {
             mainWindow.webContents.send('update-available', {
               version: latestVersion,
               url: release.html_url,
+              downloadUrl: isPortable ? null : (installerAsset?.browser_download_url || null),
+              isPortable,
             });
           }
         }
@@ -394,6 +400,67 @@ function checkForUpdates() {
     log(`checkForUpdates request error: ${e.message}`);
   });
 }
+
+function downloadFile(url, destPath, onProgress, onDone, onError, redirectCount = 0) {
+  if (redirectCount > 10) { onError(new Error('Too many redirects')); return; }
+  const parsedUrl = new URL(url);
+  const mod = parsedUrl.protocol === 'https:' ? https : http;
+
+  mod.get(url, { headers: { 'User-Agent': 'CarBudget-App' } }, (res) => {
+    if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 303) {
+      res.resume();
+      downloadFile(res.headers.location, destPath, onProgress, onDone, onError, redirectCount + 1);
+      return;
+    }
+    if (res.statusCode !== 200) {
+      res.resume();
+      onError(new Error(`HTTP ${res.statusCode}`));
+      return;
+    }
+
+    const totalSize = parseInt(res.headers['content-length'], 10);
+    let downloaded = 0;
+    const file = fs.createWriteStream(destPath);
+
+    res.on('data', chunk => {
+      downloaded += chunk.length;
+      if (totalSize) onProgress(Math.round((downloaded / totalSize) * 100));
+    });
+    res.pipe(file);
+    file.on('finish', () => file.close(onDone));
+    file.on('error', err => { fs.unlink(destPath, () => {}); onError(err); });
+    res.on('error', err => { fs.unlink(destPath, () => {}); onError(err); });
+  }).on('error', onError);
+}
+
+ipcMain.on('download-and-install-update', (event, downloadUrl) => {
+  const fileName = path.basename(new URL(downloadUrl).pathname);
+  const destPath = path.join(app.getPath('temp'), fileName);
+  log(`Downloading update from ${downloadUrl} to ${destPath}`);
+
+  downloadFile(
+    downloadUrl,
+    destPath,
+    (percent) => {
+      if (mainWindow) mainWindow.webContents.send('download-progress', percent);
+    },
+    () => {
+      log('Download complete — launching installer');
+      if (mainWindow) mainWindow.webContents.send('download-progress', 100);
+      const { spawn: spawnProc } = require('child_process');
+      spawnProc(destPath, [], { detached: true, stdio: 'ignore' }).unref();
+      setTimeout(() => app.quit(), 500);
+    },
+    (err) => {
+      log(`Download failed: ${err.message}`);
+      if (mainWindow) mainWindow.webContents.send('download-error', err.message);
+    }
+  );
+});
+
+ipcMain.on('open-external', (event, url) => {
+  shell.openExternal(url);
+});
 
 ipcMain.on('set-close-to-tray', (event, value) => {
   closeToTray = !!value;

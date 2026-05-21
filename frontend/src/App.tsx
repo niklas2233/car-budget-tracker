@@ -18,7 +18,9 @@ function App() {
   const [setupStatus, setSetupStatus] = useState<AppSetupStatusDto | null>(null);
   const [setupLoading, setSetupLoading] = useState(true);
   const [setupError, setSetupError] = useState('');
-  const [updateInfo, setUpdateInfo] = useState<{ version: string; url: string } | null>(null);
+  const [updateInfo, setUpdateInfo] = useState<{ version: string; url: string; downloadUrl: string | null; isPortable: boolean } | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+  const [downloadError, setDownloadError] = useState('');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
@@ -26,9 +28,13 @@ function App() {
   }, [darkMode]);
 
   useEffect(() => {
-    (window as any).api?.onUpdateAvailable?.((info: { version: string; url: string }) => {
+    const api = (window as any).api;
+    if (!api) return;
+    api.onUpdateAvailable?.((info: { version: string; url: string; downloadUrl: string | null; isPortable: boolean }) => {
       setUpdateInfo(info);
     });
+    api.onDownloadProgress?.((percent: number) => setDownloadProgress(percent));
+    api.onDownloadError?.((msg: string) => { setDownloadError(msg); setDownloadProgress(null); });
   }, []);
 
   useEffect(() => {
@@ -81,9 +87,30 @@ function App() {
         </header>
         {updateInfo && (
           <div className="update-banner">
-            <span>A new version ({updateInfo.version}) is available.</span>
-            <a href={updateInfo.url} target="_blank" rel="noreferrer">Download</a>
-            <button className="update-banner-dismiss" onClick={() => setUpdateInfo(null)} aria-label="Dismiss">✕</button>
+            {downloadProgress !== null ? (
+              <>
+                <span>Downloading update... {downloadProgress}%</span>
+                <div className="update-progress-track">
+                  <div className="update-progress-fill" style={{ width: `${downloadProgress}%` }} />
+                </div>
+              </>
+            ) : downloadError ? (
+              <>
+                <span>Download failed: {downloadError}</span>
+                <button className="update-banner-action" onClick={() => { setDownloadError(''); (window as any).api?.downloadAndInstallUpdate(updateInfo.downloadUrl); setDownloadProgress(0); }}>Retry</button>
+                <button className="update-banner-dismiss" onClick={() => { setUpdateInfo(null); setDownloadError(''); }} aria-label="Dismiss">✕</button>
+              </>
+            ) : (
+              <>
+                <span>Version {updateInfo.version} is available.</span>
+                {updateInfo.isPortable || !updateInfo.downloadUrl ? (
+                  <button className="update-banner-action" onClick={() => (window as any).api?.openExternal(updateInfo.url)}>Download</button>
+                ) : (
+                  <button className="update-banner-action" onClick={() => { (window as any).api?.downloadAndInstallUpdate(updateInfo.downloadUrl); setDownloadProgress(0); }}>Update now</button>
+                )}
+                <button className="update-banner-dismiss" onClick={() => setUpdateInfo(null)} aria-label="Dismiss">✕</button>
+              </>
+            )}
           </div>
         )}
         <main>
