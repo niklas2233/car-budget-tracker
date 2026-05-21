@@ -1,6 +1,6 @@
 # 🚗 Car Budget Manager
 
-A car budget tracking application built with .NET and React.
+A car budget tracking application built with .NET and React. Built by Claude and Copilot.
 
 ## Features
 

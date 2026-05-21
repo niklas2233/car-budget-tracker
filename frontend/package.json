@@ -26,9 +26,9 @@
   "main": "public/electron.js",
   "scripts": {
     "start": "set PORT=2233&&react-scripts start",
-    "build": "react-scripts build",
-    "build-backend": "dotnet publish ..\\src\\CarBudget.Api\\CarBudget.Api.csproj -c Release -r win-x64 --self-contained true -o backend",
-    "copy-to-api": "xcopy build\\* ..\\src\\CarBudget.Api\\wwwroot\\ /E /Y /I",
+    "build": "set GENERATE_SOURCEMAP=false&&react-scripts build",
+    "build-backend": "(if exist backend rmdir /s /q backend) && dotnet publish ..\\src\\CarBudget.Api\\CarBudget.Api.csproj -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o backend",
+    "copy-to-api": "(if exist ..\\src\\CarBudget.Api\\wwwroot rmdir /s /q ..\\src\\CarBudget.Api\\wwwroot) && xcopy build\\* ..\\src\\CarBudget.Api\\wwwroot\\ /E /Y /I",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "electron-start": "electron .",
@@ -73,7 +73,14 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": false,
+      "include": "installer.nsh"
+    },
+    "portable": {
+      "unpackDirName": "CarBudget"
     }
   },
   "eslintConfig": {

@@ -1,6 +1,5 @@
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
-// Expose only what you need
 contextBridge.exposeInMainWorld('api', {
-  // Add any IPC channels here if needed
+  setCloseToTray: (enabled) => ipcRenderer.send('set-close-to-tray', enabled),
 });

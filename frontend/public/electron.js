@@ -1,17 +1,73 @@
-const { app, BrowserWindow, Menu, Tray, nativeImage, shell } = require('electron');
+const { app, BrowserWindow, Menu, Tray, nativeImage, shell, ipcMain } = require('electron');
 const { spawn } = require('child_process');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const isDev = !app.isPackaged;
 
+// Set app name before any getPath() calls so userData lands in Roaming\CarBudget, not Roaming\frontend.
+app.setName('CarBudget');
+
+const processStartedAt = Date.now();
+
+function getLogPath() {
+  try {
+    return path.join(app.getPath('userData'), 'electron.log');
+  } catch {
+    return path.join(process.env.TEMP || '.', 'carbudget-electron.log');
+  }
+}
+
+function log(message) {
+  const elapsed = Date.now() - processStartedAt;
+  const ts = new Date().toISOString();
+  try {
+    fs.appendFileSync(getLogPath(), `[${ts}] +${elapsed}ms ${message}\n`);
+  } catch {}
+}
+
+// --- Settings (closeToTray) stored in a JSON file so the value is available
+//     synchronously before any window events fire, eliminating the race condition
+//     that caused close-to-tray to silently fail.
+
+function getSettingsPath() {
+  return path.join(app.getPath('userData'), 'electron-settings.json');
+}
+
+function readSettings() {
+  try {
+    return JSON.parse(fs.readFileSync(getSettingsPath(), 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function writeSettings(settings) {
+  try {
+    fs.mkdirSync(path.dirname(getSettingsPath()), { recursive: true });
+    fs.writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2), 'utf8');
+  } catch {}
+}
+
+log('=== Process start ===');
+
+// Single-instance lock — if another instance is already running, focus it and exit.
+const gotLock = app.requestSingleInstanceLock();
+log(`requestSingleInstanceLock → gotLock=${gotLock}`);
+if (!gotLock) {
+  log('Second instance detected — quitting');
+  app.quit();
+}
+
 let mainWindow;
 let tray;
 let isQuitting = false;
+let closeToTray = readSettings().closeToTray === true;
 let backendProcess = null;
 let resolvedDataDir = null;
 const backendPort = 2233;
-const trayMode = process.argv.includes('--tray');
+
+log(`closeToTray from settings: ${closeToTray}`);
 
 function getBackendExePath() {
   const exeName = process.platform === 'win32' ? 'CarBudget.Api.exe' : 'CarBudget.Api';
@@ -31,6 +87,7 @@ function waitForBackendReady(timeoutMs = 30000) {
       const req = http.get(`http://127.0.0.1:${backendPort}/openapi/v1.json`, (res) => {
         res.resume();
         if (res.statusCode && res.statusCode < 500) {
+          log(`Backend ready — HTTP ${res.statusCode}`);
           resolve();
           return;
         }
@@ -43,8 +100,9 @@ function waitForBackendReady(timeoutMs = 30000) {
         setTimeout(tryConnect, 500);
       });
 
-      req.on('error', () => {
+      req.on('error', (err) => {
         if (Date.now() - startedAt > timeoutMs) {
+          log(`Backend ready timeout — ${err.message}`);
           reject(new Error('Backend did not become ready in time.'));
           return;
         }
@@ -67,6 +125,8 @@ function startBackendIfNeeded() {
   }
 
   const backendExe = getBackendExePath();
+  log(`startBackendIfNeeded — exe: ${backendExe}`);
+
   if (!fs.existsSync(backendExe)) {
     return Promise.reject(new Error(`Backend executable not found at ${backendExe}`));
   }
@@ -82,6 +142,7 @@ function startBackendIfNeeded() {
     CARBUDGET_DATA_DIR: dataDir,
   };
 
+  log('Spawning backend process');
   backendProcess = spawn(backendExe, [], {
     cwd: path.dirname(backendExe),
     env: backendEnv,
@@ -89,16 +150,16 @@ function startBackendIfNeeded() {
     stdio: 'ignore',
   });
 
-  backendProcess.on('exit', () => {
+  backendProcess.on('exit', (code) => {
+    log(`Backend process exited — code=${code}`);
     backendProcess = null;
   });
 
+  log('Waiting for backend to become ready');
   return waitForBackendReady();
 }
 
 function resolvePreferredDataDirectory() {
-  // For the portable exe, electron-builder sets PORTABLE_EXECUTABLE_DIR to the
-  // directory containing the original portable exe — use that so data lives next to it.
   const portableExecutableDir = process.env.PORTABLE_EXECUTABLE_DIR;
   if (portableExecutableDir && portableExecutableDir.trim().length > 0) {
     const dir = path.join(portableExecutableDir.trim(), 'CarBudgetData');
@@ -112,10 +173,6 @@ function resolvePreferredDataDirectory() {
     }
   }
 
-  // Installed build or PORTABLE_EXECUTABLE_DIR unavailable/unwritable:
-  // fall back to the standard per-user app-data directory.
-  // NOTE: process.execPath is intentionally NOT used here — for portable exes it
-  // points to the temporary extraction directory, not the original exe folder.
   return app.getPath('userData');
 }
 
@@ -133,42 +190,24 @@ function stopBackendIfRunning() {
 }
 
 function showWindow() {
+  log(`showWindow — mainWindow=${!!mainWindow}`);
   if (!mainWindow) {
-    createWindow();
     return;
-  }
-
-  if (!mainWindow.isVisible()) {
-    mainWindow.show();
   }
 
   if (mainWindow.isMinimized()) {
     mainWindow.restore();
   }
 
+  mainWindow.show();
   mainWindow.focus();
 }
 
-function createTray() {
-  const iconPath = path.join(__dirname, 'favicon.ico');
-  const trayIcon = nativeImage.createFromPath(iconPath);
-  tray = new Tray(trayIcon);
-  tray.setToolTip('CarBudget');
-
-  const contextMenu = Menu.buildFromTemplate([
+function buildTrayMenu() {
+  return Menu.buildFromTemplate([
     {
       label: 'Open CarBudget',
-      click: () => {
-        showWindow();
-      },
-    },
-    {
-      label: 'Hide Window',
-      click: () => {
-        if (mainWindow) {
-          mainWindow.hide();
-        }
-      },
+      click: () => showWindow(),
     },
     { type: 'separator' },
     {
@@ -178,6 +217,7 @@ function createTray() {
         shell.openPath(dir);
       },
     },
+    { type: 'separator' },
     {
       label: 'Quit',
       click: () => {
@@ -186,20 +226,25 @@ function createTray() {
       },
     },
   ]);
-
-  tray.setContextMenu(contextMenu);
-  tray.on('double-click', () => {
-    showWindow();
-  });
 }
 
-function createWindow() {
+function createTray() {
+  const iconPath = path.join(__dirname, 'favicon.ico');
+  const trayIcon = nativeImage.createFromPath(iconPath);
+  tray = new Tray(trayIcon);
+  tray.setToolTip('CarBudget');
+  tray.setContextMenu(buildTrayMenu());
+  tray.on('double-click', () => showWindow());
+}
+
+function createWindow(initialUrl) {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    show: !trayMode,
+    show: false,
+    backgroundColor: '#0f172a',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -208,67 +253,106 @@ function createWindow() {
     icon: path.join(__dirname, 'favicon.ico'),
   });
 
-  const startUrl = `http://127.0.0.1:${backendPort}`;
+  const url = initialUrl || `http://127.0.0.1:${backendPort}`;
+  mainWindow.loadURL(url);
 
-  mainWindow.loadURL(startUrl);
-
-  if (!trayMode) {
+  mainWindow.once('ready-to-show', () => {
+    log('ready-to-show — showing window');
     mainWindow.show();
-  }
+  });
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    const currentUrl = mainWindow ? mainWindow.webContents.getURL() : '?';
+    log(`did-finish-load — ${currentUrl}`);
+  });
+
+  mainWindow.on('close', (event) => {
+    log(`window close event — isQuitting=${isQuitting} closeToTray=${closeToTray}`);
+    if (!isQuitting && closeToTray) {
+      event.preventDefault();
+      mainWindow.hide();
+      log('Window hidden to tray');
+    }
+  });
 
   if (isDev) {
     mainWindow.webContents.openDevTools();
   }
-
-  mainWindow.on('minimize', (event) => {
-    event.preventDefault();
-    mainWindow.hide();
-  });
-
-  mainWindow.on('close', (event) => {
-    if (trayMode && !isQuitting) {
-      event.preventDefault();
-      mainWindow.hide();
-    }
-  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
+// When a second instance tries to launch, focus the existing window instead.
+app.on('second-instance', () => {
+  log('second-instance event received');
+  showWindow();
+});
+
 app.on('ready', async () => {
+  if (!gotLock) {
+    // app.quit() was already called but ready still fires — do nothing.
+    log('app ready (second instance — ignoring)');
+    return;
+  }
+  log('app ready');
+  createTray();
+
+  if (isDev) {
+    createWindow(null);
+    return;
+  }
+
+  log('Creating window with loading screen');
+  const loadingHtml = `data:text/html,<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;color:#94a3b8;gap:16px}.spinner{width:40px;height:40px;border:3px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}p{font-size:14px;letter-spacing:0.05em}</style></head><body><div class="spinner"></div><p>Starting CarBudget...</p></body></html>`;
+  createWindow(loadingHtml);
+
   try {
     await startBackendIfNeeded();
   } catch (error) {
+    log(`startBackendIfNeeded failed — ${error}`);
     console.error(error);
     app.quit();
     return;
   }
 
-  createTray();
-  createWindow();
+  log('Backend ready — navigating to app');
+  if (mainWindow) {
+    mainWindow.loadURL(`http://127.0.0.1:${backendPort}`);
+  }
 });
 
 app.on('before-quit', () => {
+  log('before-quit');
   isQuitting = true;
   stopBackendIfRunning();
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin' && !trayMode) {
+  // Always quit if the quit was already initiated (e.g. from the tray menu).
+  // Only stay alive when close-to-tray is enabled and this is a normal window close.
+  if (process.platform !== 'darwin' && (!closeToTray || isQuitting)) {
     app.quit();
   }
 });
 
 app.on('activate', () => {
   if (mainWindow === null) {
-    createWindow();
+    createWindow(null);
   }
 });
 
 app.on('quit', () => {
   stopBackendIfRunning();
+});
+
+ipcMain.on('set-close-to-tray', (event, value) => {
+  closeToTray = !!value;
+  const s = readSettings();
+  s.closeToTray = closeToTray;
+  writeSettings(s);
+  log(`set-close-to-tray → ${closeToTray}`);
 });
 
 Menu.setApplicationMenu(null);

@@ -8,12 +8,23 @@ type SetupPageProps = {
   onSaved: () => void;
 };
 
+const CLOSE_TO_TRAY_KEY = 'carbudget.closeToTray';
+
 const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
   const [region, setRegion] = useState(setupStatus.currentRegion || 'sweden');
   const [currency, setCurrency] = useState(setupStatus.currentCurrency || '');
   const [debugSavePlaywrightHtml, setDebugSavePlaywrightHtml] = useState(setupStatus.debugSavePlaywrightHtml || false);
+  const [closeToTray, setCloseToTray] = useState(() => localStorage.getItem(CLOSE_TO_TRAY_KEY) === 'true');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const isElectron = !!(window as any).api?.setCloseToTray;
+
+  const handleCloseToTrayChange = (checked: boolean) => {
+    setCloseToTray(checked);
+    localStorage.setItem(CLOSE_TO_TRAY_KEY, String(checked));
+    (window as any).api?.setCloseToTray(checked);
+  };
 
   const isInitialSetup = setupStatus.setupRequired;
 
@@ -78,6 +89,25 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
               <option value="CHF">CHF — Swiss Franc</option>
             </select>
           </label>
+
+          {isElectron && !setupStatus.isContainer && (
+            <fieldset className="setup-fieldset">
+              <legend>Window</legend>
+              <label className="setup-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={closeToTray}
+                  onChange={(e) => handleCloseToTrayChange(e.target.checked)}
+                />
+                Close to tray instead of quitting
+              </label>
+              {closeToTray && (
+                <p className="setup-hint">
+                  Closing the window will hide it to the system tray. Use the tray icon to reopen or quit.
+                </p>
+              )}
+            </fieldset>
+          )}
 
           <fieldset className="setup-fieldset">
             <legend>Debugging</legend>
