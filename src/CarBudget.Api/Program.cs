@@ -192,6 +192,8 @@ app.MapGet("/api/runtime-config.js", (HttpContext context) =>
 
 app.MapGet("/api/setup-status", () =>
 {
+    var portEnv = Environment.GetEnvironmentVariable("webui_port");
+    var currentPort = int.TryParse(portEnv, out var p) ? p : (fileConfig?.Port ?? 2233);
     return Results.Ok(new AppSetupStatusDto
     {
         SetupRequired = setupRequiredCheck(),
@@ -199,6 +201,7 @@ app.MapGet("/api/setup-status", () =>
         ConfigFilePath = configFilePath,
         CurrentRegion = VehiclesController.Region,
         CurrentCurrency = activeCurrency,
+        CurrentPort = currentPort,
         DebugSavePlaywrightHtml = VehiclesController.DebugSaveHtml,
         IsContainer = runningInContainer,
     });
@@ -222,10 +225,13 @@ app.MapPost("/api/app-config", (SaveAppConfigurationDto request) =>
         ? null
         : request.Currency.Trim().ToUpperInvariant();
 
+    var normalizedPort = (request.Port is int rp && rp >= 1024 && rp <= 65535) ? rp : (int?)null;
+
     var newConfig = new AppFileConfig
     {
         Region = normalizedRegion,
         Currency = normalizedCurrency,
+        Port = normalizedPort,
         Debug = new AppFileDebugConfig
         {
             SavePlaywrightHtml = request.DebugSavePlaywrightHtml,
@@ -433,6 +439,7 @@ sealed class AppFileConfig
 {
     public string? Region { get; set; }
     public string? Currency { get; set; }
+    public int? Port { get; set; }
     public AppFileDebugConfig? Debug { get; set; }
 }
 
@@ -448,6 +455,7 @@ sealed class AppSetupStatusDto
     public string ConfigFilePath { get; set; } = string.Empty;
     public string CurrentRegion { get; set; } = "sweden";
     public string? CurrentCurrency { get; set; }
+    public int CurrentPort { get; set; } = 2233;
     public bool DebugSavePlaywrightHtml { get; set; }
     public bool IsContainer { get; set; }
 }
@@ -464,6 +472,7 @@ sealed class SaveAppConfigurationDto
 {
     public string? Region { get; set; }
     public string? Currency { get; set; }
+    public int? Port { get; set; }
     public bool DebugSavePlaywrightHtml { get; set; }
 }
 

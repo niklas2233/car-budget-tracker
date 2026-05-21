@@ -66,7 +66,7 @@ let isQuitting = false;
 let closeToTray = readSettings().closeToTray === true;
 let backendProcess = null;
 let resolvedDataDir = null;
-const backendPort = 2233;
+const backendPort = readSettings().port || 2233;
 
 log(`closeToTray from settings: ${closeToTray}`);
 
@@ -468,6 +468,16 @@ ipcMain.on('set-close-to-tray', (event, value) => {
   s.closeToTray = closeToTray;
   writeSettings(s);
   log(`set-close-to-tray → ${closeToTray}`);
+});
+
+ipcMain.on('set-backend-port', (event, port) => {
+  const p = parseInt(port, 10);
+  if (p >= 1024 && p <= 65535) {
+    const s = readSettings();
+    s.port = p;
+    writeSettings(s);
+    log(`set-backend-port → ${p}`);
+  }
 });
 
 Menu.setApplicationMenu(null);

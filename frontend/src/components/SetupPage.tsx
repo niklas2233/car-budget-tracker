@@ -13,10 +13,12 @@ const CLOSE_TO_TRAY_KEY = 'carbudget.closeToTray';
 const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
   const [region, setRegion] = useState(setupStatus.currentRegion || 'sweden');
   const [currency, setCurrency] = useState(setupStatus.currentCurrency || '');
+  const [port, setPort] = useState(String(setupStatus.currentPort || 2233));
   const [debugSavePlaywrightHtml, setDebugSavePlaywrightHtml] = useState(setupStatus.debugSavePlaywrightHtml || false);
   const [closeToTray, setCloseToTray] = useState(() => localStorage.getItem(CLOSE_TO_TRAY_KEY) === 'true');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [restartRequired, setRestartRequired] = useState(false);
 
   const isElectron = !!(window as any).api?.setCloseToTray;
 
@@ -34,11 +36,22 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
     setError('');
 
     try {
+      const parsedPort = parseInt(port, 10);
+      const validPort = !isNaN(parsedPort) && parsedPort >= 1024 && parsedPort <= 65535 ? parsedPort : undefined;
+
       await appConfigApi.saveConfig({
         region,
         currency: currency || undefined,
+        port: validPort,
         debugSavePlaywrightHtml,
       });
+
+      if (validPort && validPort !== setupStatus.currentPort) {
+        (window as any).api?.setBackendPort(validPort);
+        setRestartRequired(true);
+        setSaving(false);
+        return;
+      }
 
       onSaved();
     } catch (submitError) {
@@ -90,6 +103,25 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
             </select>
           </label>
 
+          {!isInitialSetup && isElectron && !setupStatus.isContainer && (
+            <fieldset className="setup-fieldset">
+              <legend>Network</legend>
+              <label>
+                Backend port
+                <input
+                  type="number"
+                  min={1024}
+                  max={65535}
+                  value={port}
+                  onChange={(e) => setPort(e.target.value)}
+                />
+              </label>
+              <p className="setup-hint">
+                Port the backend listens on. Default is 2233. Requires a restart to take effect.
+              </p>
+            </fieldset>
+          )}
+
           {isElectron && !setupStatus.isContainer && (
             <fieldset className="setup-fieldset">
               <legend>Window</legend>
@@ -132,6 +164,11 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
           </button>
         </form>
 
+        {restartRequired && (
+          <p className="setup-hint" style={{ marginTop: '12px', color: 'var(--text-secondary)' }}>
+            Port saved. Please restart the app for the new port to take effect.
+          </p>
+        )}
         {error && <p className="setup-error">{error}</p>}
       </div>
     </section>
