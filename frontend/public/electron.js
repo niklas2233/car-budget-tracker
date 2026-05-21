@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, Tray, nativeImage, shell, ipcMain } = require('electron');
 const { spawn } = require('child_process');
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const isDev = !app.isPackaged;
@@ -264,6 +265,9 @@ function createWindow(initialUrl) {
   mainWindow.webContents.on('did-finish-load', () => {
     const currentUrl = mainWindow ? mainWindow.webContents.getURL() : '?';
     log(`did-finish-load — ${currentUrl}`);
+    if (!isDev && currentUrl.includes('127.0.0.1')) {
+      checkForUpdates();
+    }
   });
 
   mainWindow.on('close', (event) => {
@@ -346,6 +350,50 @@ app.on('activate', () => {
 app.on('quit', () => {
   stopBackendIfRunning();
 });
+
+function isNewerVersion(latest, current) {
+  const parse = v => v.replace(/^v/, '').split('.').map(Number);
+  const [la, lb, lc] = parse(latest);
+  const [ca, cb, cc] = parse(current);
+  if (la !== ca) return la > ca;
+  if (lb !== cb) return lb > cb;
+  return lc > cc;
+}
+
+function checkForUpdates() {
+  const currentVersion = app.getVersion();
+  const options = {
+    hostname: 'api.github.com',
+    path: '/repos/niklas2233/car-budget-tracker/releases/latest',
+    headers: { 'User-Agent': 'CarBudget-App' },
+  };
+
+  https.get(options, (res) => {
+    let data = '';
+    res.on('data', chunk => { data += chunk; });
+    res.on('end', () => {
+      try {
+        const release = JSON.parse(data);
+        const latestTag = release.tag_name || '';
+        const latestVersion = latestTag.replace(/^v/, '');
+        log(`checkForUpdates — current=${currentVersion} latest=${latestVersion}`);
+        if (latestVersion && isNewerVersion(latestVersion, currentVersion)) {
+          log(`Update available: ${latestVersion}`);
+          if (mainWindow) {
+            mainWindow.webContents.send('update-available', {
+              version: latestVersion,
+              url: release.html_url,
+            });
+          }
+        }
+      } catch (e) {
+        log(`checkForUpdates parse error: ${e.message}`);
+      }
+    });
+  }).on('error', (e) => {
+    log(`checkForUpdates request error: ${e.message}`);
+  });
+}
 
 ipcMain.on('set-close-to-tray', (event, value) => {
   closeToTray = !!value;

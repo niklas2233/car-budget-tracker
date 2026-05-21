@@ -46,6 +46,37 @@ body {
   min-height: 100vh;
 }
 
+.update-banner {
+  background: #2563eb;
+  color: #fff;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.update-banner a {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.update-banner-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  opacity: 0.8;
+}
+
+.update-banner-dismiss:hover {
+  opacity: 1;
+}
+
 .App-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;

@@ -18,11 +18,18 @@ function App() {
   const [setupStatus, setSetupStatus] = useState<AppSetupStatusDto | null>(null);
   const [setupLoading, setSetupLoading] = useState(true);
   const [setupError, setSetupError] = useState('');
+  const [updateInfo, setUpdateInfo] = useState<{ version: string; url: string } | null>(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
     localStorage.setItem('darkMode', String(darkMode));
   }, [darkMode]);
+
+  useEffect(() => {
+    (window as any).api?.onUpdateAvailable?.((info: { version: string; url: string }) => {
+      setUpdateInfo(info);
+    });
+  }, []);
 
   useEffect(() => {
     const loadSetupStatus = async () => {
@@ -72,6 +79,13 @@ function App() {
             {darkMode ? '☀️ Light' : '🌙 Dark'}
           </button>
         </header>
+        {updateInfo && (
+          <div className="update-banner">
+            <span>A new version ({updateInfo.version}) is available.</span>
+            <a href={updateInfo.url} target="_blank" rel="noreferrer">Download</a>
+            <button className="update-banner-dismiss" onClick={() => setUpdateInfo(null)} aria-label="Dismiss">✕</button>
+          </div>
+        )}
         <main>
           <Routes>
             <Route
