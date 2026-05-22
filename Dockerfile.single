@@ -30,8 +30,8 @@ RUN apt-get update && apt-get install -y curl && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Update npm to pull in patched picomatch (CVE-2026-33671)
-RUN npm install -g npm@latest
+# Patch picomatch inside npm's own bundled deps (CVE-2026-33671)
+RUN cd /usr/lib/node_modules/npm && npm install picomatch@4.0.4
 
 # Install Playwright's bundled Chromium and all system dependencies.
 # The browser is placed in /ms-playwright so it survives across rebuilds
