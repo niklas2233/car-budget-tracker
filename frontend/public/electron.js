@@ -6,14 +6,25 @@ const fs = require('fs');
 const path = require('path');
 const isDev = !app.isPackaged;
 
-// Set app name before any getPath() calls so userData lands in Roaming\CarBudget, not Roaming\frontend.
 app.setName('CarBudget');
 
 const processStartedAt = Date.now();
 
+// Returns the data directory for log, settings, and database.
+// Portable  → <dir containing portable exe>\CarBudgetData\
+// Installed → %APPDATA%\CarBudget\  (Roaming — survives uninstall and auto-updates
+//              because the NSIS uninstaller only removes $INSTDIR, not Roaming)
+function getAppDataDir() {
+  const portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
+  if (!isDev && portableDir && portableDir.trim().length > 0) {
+    return path.join(portableDir.trim(), 'CarBudgetData');
+  }
+  return app.getPath('userData');
+}
+
 function getLogPath() {
   try {
-    return path.join(app.getPath('userData'), 'electron.log');
+    return path.join(getAppDataDir(), 'electron.log');
   } catch {
     return path.join(process.env.TEMP || '.', 'carbudget-electron.log');
   }
@@ -27,12 +38,11 @@ function log(message) {
   } catch {}
 }
 
-// --- Settings (closeToTray) stored in a JSON file so the value is available
-//     synchronously before any window events fire, eliminating the race condition
-//     that caused close-to-tray to silently fail.
+// --- Settings stored in the app data dir so they live alongside the database
+//     and survive uninstall/reinstall the same way.
 
 function getSettingsPath() {
-  return path.join(app.getPath('userData'), 'electron-settings.json');
+  return path.join(getAppDataDir(), 'electron-settings.json');
 }
 
 function readSettings() {
@@ -161,34 +171,7 @@ function startBackendIfNeeded() {
 }
 
 function resolvePreferredDataDirectory() {
-  // Portable: store data next to the portable EXE.
-  const portableExecutableDir = process.env.PORTABLE_EXECUTABLE_DIR;
-  if (portableExecutableDir && portableExecutableDir.trim().length > 0) {
-    const dir = path.join(portableExecutableDir.trim(), 'CarBudgetData');
-    try {
-      fs.mkdirSync(dir, { recursive: true });
-      const probePath = path.join(dir, '.carbudget-write-test');
-      fs.writeFileSync(probePath, 'ok');
-      fs.unlinkSync(probePath);
-      return dir;
-    } catch {
-    }
-  }
-
-  // Installed: store data in a 'data' subfolder next to the EXE.
-  // Works for per-user installs (AppData\Local). Falls back to Roaming
-  // for machine-wide installs in Program Files where the dir isn't writable.
-  const installDataDir = path.join(path.dirname(process.execPath), 'data');
-  try {
-    fs.mkdirSync(installDataDir, { recursive: true });
-    const probePath = path.join(installDataDir, '.carbudget-write-test');
-    fs.writeFileSync(probePath, 'ok');
-    fs.unlinkSync(probePath);
-    return installDataDir;
-  } catch {
-  }
-
-  return app.getPath('userData');
+  return getAppDataDir();
 }
 
 function stopBackendIfRunning() {
@@ -244,7 +227,9 @@ function buildTrayMenu() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'favicon.ico');
+  const iconPath = isDev
+    ? path.join(__dirname, 'favicon.ico')
+    : path.join(process.resourcesPath, 'favicon.ico');
   const trayIcon = nativeImage.createFromPath(iconPath);
   tray = new Tray(trayIcon);
   tray.setToolTip('CarBudget');
@@ -265,7 +250,7 @@ function createWindow(initialUrl) {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    icon: path.join(__dirname, 'favicon.ico'),
+    icon: isDev ? path.join(__dirname, 'favicon.ico') : path.join(process.resourcesPath, 'favicon.ico'),
   });
 
   const url = initialUrl || `http://127.0.0.1:${backendPort}`;

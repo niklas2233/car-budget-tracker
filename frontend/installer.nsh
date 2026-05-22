@@ -54,12 +54,12 @@ FunctionEnd
 
 !macro customInstall
   ${If} $DesktopShortcutState == ${BST_CHECKED}
-    CreateShortcut "$DESKTOP\CarBudget.lnk" "$INSTDIR\CarBudget.exe"
+    CreateShortcut "$DESKTOP\CarBudget.lnk" "$INSTDIR\CarBudget.exe" "" "$INSTDIR\resources\favicon.ico" 0
   ${EndIf}
 
   ${If} $StartMenuShortcutState == ${BST_CHECKED}
     CreateDirectory "$SMPROGRAMS\CarBudget"
-    CreateShortcut "$SMPROGRAMS\CarBudget\CarBudget.lnk" "$INSTDIR\CarBudget.exe"
+    CreateShortcut "$SMPROGRAMS\CarBudget\CarBudget.lnk" "$INSTDIR\CarBudget.exe" "" "$INSTDIR\resources\favicon.ico" 0
   ${EndIf}
 !macroend
 
