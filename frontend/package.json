@@ -46,6 +46,7 @@
   "build": {
     "appId": "com.carbudget.app",
     "productName": "CarBudget",
+    "icon": "public/favicon.ico",
     "files": [
       "build/**/*",
       "public/electron.js",
