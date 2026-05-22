@@ -33,11 +33,11 @@ RUN apt-get update && apt-get install -y curl && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Patch npm bundled deps: picomatch (CVE-2026-33671), brace-expansion (CVE-2026-33750), ip-address (CVE-2026-42338)
+# Patch npm bundled deps: picomatch (CVE-2026-33671), brace-expansion (CVE-2026-33750, CVE-2026-45149), ip-address (CVE-2026-42338)
 RUN NPM_MODS=/usr/lib/node_modules/npm/node_modules && \
     curl -sL https://registry.npmjs.org/picomatch/-/picomatch-4.0.4.tgz | tar -xz -C /tmp && \
     rm -rf $NPM_MODS/picomatch && mv /tmp/package $NPM_MODS/picomatch && \
-    curl -sL https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.5.tgz | tar -xz -C /tmp && \
+    curl -sL https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.6.tgz | tar -xz -C /tmp && \
     if [ -d "$NPM_MODS/brace-expansion" ]; then rm -rf $NPM_MODS/brace-expansion && mv /tmp/package $NPM_MODS/brace-expansion; else rm -rf /tmp/package; fi && \
     curl -sL https://registry.npmjs.org/ip-address/-/ip-address-10.1.1.tgz | tar -xz -C /tmp && \
     if [ -d "$NPM_MODS/ip-address" ]; then rm -rf $NPM_MODS/ip-address && mv /tmp/package $NPM_MODS/ip-address; else rm -rf /tmp/package; fi
