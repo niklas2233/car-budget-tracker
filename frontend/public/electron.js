@@ -161,6 +161,7 @@ function startBackendIfNeeded() {
 }
 
 function resolvePreferredDataDirectory() {
+  // Portable: store data next to the portable EXE.
   const portableExecutableDir = process.env.PORTABLE_EXECUTABLE_DIR;
   if (portableExecutableDir && portableExecutableDir.trim().length > 0) {
     const dir = path.join(portableExecutableDir.trim(), 'CarBudgetData');
@@ -172,6 +173,19 @@ function resolvePreferredDataDirectory() {
       return dir;
     } catch {
     }
+  }
+
+  // Installed: store data in a 'data' subfolder next to the EXE.
+  // Works for per-user installs (AppData\Local). Falls back to Roaming
+  // for machine-wide installs in Program Files where the dir isn't writable.
+  const installDataDir = path.join(path.dirname(process.execPath), 'data');
+  try {
+    fs.mkdirSync(installDataDir, { recursive: true });
+    const probePath = path.join(installDataDir, '.carbudget-write-test');
+    fs.writeFileSync(probePath, 'ok');
+    fs.unlinkSync(probePath);
+    return installDataDir;
+  } catch {
   }
 
   return app.getPath('userData');
