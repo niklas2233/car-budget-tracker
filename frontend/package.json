@@ -7,7 +7,6 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/jest": "^30.0.0",
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@types/react-datepicker": "^6.2.0",
@@ -17,20 +16,18 @@
     "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.15.0",
-    "react-scripts": "^5.0.1",
     "recharts": "^3.8.1",
-    "typescript": "^4.9.5",
+    "typescript": "^5.0.0",
     "web-vitals": "^5.2.0"
   },
   "homepage": "./",
   "main": "public/electron.js",
   "scripts": {
-    "start": "set PORT=2233&&react-scripts start",
-    "build": "set GENERATE_SOURCEMAP=false&&react-scripts build",
+    "start": "vite",
+    "build": "tsc --noEmit && vite build",
     "build-backend": "(if exist backend rmdir /s /q backend) && dotnet publish ..\\src\\CarBudget.Api\\CarBudget.Api.csproj -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o backend",
     "copy-to-api": "(if exist ..\\src\\CarBudget.Api\\wwwroot rmdir /s /q ..\\src\\CarBudget.Api\\wwwroot) && xcopy build\\* ..\\src\\CarBudget.Api\\wwwroot\\ /E /Y /I",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "test": "vitest run",
     "electron-start": "electron .",
     "electron-tray": "electron . --tray",
     "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:2233 && electron .\"",
@@ -38,12 +35,16 @@
     "electron-build-win": "npm run build && npm run copy-to-api && npm run build-backend && electron-builder --win"
   },
   "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.2",
     "concurrently": "^9.2.1",
     "electron": "^42.2.0",
     "electron-builder": "^26.8.1",
+    "jsdom": "^29.1.1",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7",
     "wait-on": "^9.0.10"
   },
-"build": {
+  "build": {
     "appId": "com.carbudget.app",
     "productName": "CarBudget",
     "files": [
@@ -87,12 +88,6 @@
     "portable": {
       "unpackDirName": "CarBudget"
     }
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
   },
   "browserslist": {
     "production": [

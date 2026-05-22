@@ -18,7 +18,7 @@ const normalizeRegion = (value: string | undefined): SupportedRegion => {
   return 'sweden';
 };
 
-const activeRegion = normalizeRegion(window.__APP_REGION__ ?? process.env.REACT_APP_REGION);
+const activeRegion = normalizeRegion(window.__APP_REGION__ ?? import.meta.env.VITE_REGION);
 const regionSettings = SUPPORTED_REGIONS[activeRegion];
 
 const KM_PER_MILE = 1.60934;
