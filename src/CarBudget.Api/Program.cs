@@ -99,11 +99,12 @@ var debugFromEnv = string.Equals(debugEnv, "true", StringComparison.OrdinalIgnor
     || string.Equals(debugEnv, "1", StringComparison.OrdinalIgnoreCase);
 
 var currencyEnv = Environment.GetEnvironmentVariable("currency")?.Trim().ToUpperInvariant();
+var distanceUnitEnv = Environment.GetEnvironmentVariable("distanceunit")?.Trim().ToLowerInvariant();
 
 // activeCurrency / activeDistanceUnit are mutable so the POST handler can update them at runtime.
 // Env vars take priority; fall back to config file, then null (= derive from region in frontend).
 string? activeCurrency = currencyEnv ?? fileConfig?.Currency?.Trim().ToUpperInvariant();
-string? activeDistanceUnit = NormalizeDistanceUnit(fileConfig?.DistanceUnit);
+string? activeDistanceUnit = NormalizeDistanceUnit(distanceUnitEnv) ?? NormalizeDistanceUnit(fileConfig?.DistanceUnit);
 
 VehiclesController.Region = effectiveRegion;
 VehiclesController.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
@@ -152,6 +153,7 @@ AppLog($"SetupRequired: {setupRequiredCheck()}");
 AppLog($"Container:     {runningInContainer}");
 AppLog($"DebugSaveHtml: {VehiclesController.DebugSaveHtml}");
 AppLog($"Currency:      {activeCurrency ?? "(derived from region)"}");
+AppLog($"DistanceUnit:  {activeDistanceUnit ?? "(derived from region)"}");
 
 try
 {
