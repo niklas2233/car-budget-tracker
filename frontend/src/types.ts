@@ -155,6 +155,7 @@ export interface AppSetupStatusDto {
   configFilePath: string;
   currentRegion: string;
   currentCurrency?: string;
+  currentDistanceUnit?: string;
   currentPort: number;
   debugSavePlaywrightHtml: boolean;
   isContainer: boolean;
@@ -170,6 +171,7 @@ export interface AppConfigurationDto {
 export interface SaveAppConfigurationDto {
   region: string;
   currency?: string;
+  distanceUnit?: string;
   port?: number;
   debugSavePlaywrightHtml?: boolean;
 }

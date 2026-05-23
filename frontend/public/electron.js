@@ -311,6 +311,22 @@ app.on('ready', async () => {
   const loadingHtml = `data:text/html,<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;color:#94a3b8;gap:16px}.spinner{width:40px;height:40px;border:3px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}p{font-size:14px;letter-spacing:0.05em}</style></head><body><div class="spinner"></div><p>Starting CarBudget...</p></body></html>`;
   createWindow(loadingHtml);
 
+  // Clear Chromium's HTTP cache when the app version changes so updated JS/CSS
+  // is always served rather than stale immutable-cached files from a previous install.
+  const currentVersion = app.getVersion();
+  const settings = readSettings();
+  if (settings.lastVersion !== currentVersion) {
+    log(`Version changed ${settings.lastVersion} → ${currentVersion}, clearing HTTP cache`);
+    try {
+      const { session } = require('electron');
+      await session.defaultSession.clearCache();
+      log('HTTP cache cleared');
+    } catch (e) {
+      log(`clearCache failed: ${e.message}`);
+    }
+    writeSettings({ ...settings, lastVersion: currentVersion });
+  }
+
   try {
     await startBackendIfNeeded();
   } catch (error) {

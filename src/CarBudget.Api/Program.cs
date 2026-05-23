@@ -100,9 +100,10 @@ var debugFromEnv = string.Equals(debugEnv, "true", StringComparison.OrdinalIgnor
 
 var currencyEnv = Environment.GetEnvironmentVariable("currency")?.Trim().ToUpperInvariant();
 
-// activeCurrency is mutable so the POST handler can update it at runtime.
-// Env var takes priority; falls back to config file, then null (= derive from region in frontend).
+// activeCurrency / activeDistanceUnit are mutable so the POST handler can update them at runtime.
+// Env vars take priority; fall back to config file, then null (= derive from region in frontend).
 string? activeCurrency = currencyEnv ?? fileConfig?.Currency?.Trim().ToUpperInvariant();
+string? activeDistanceUnit = NormalizeDistanceUnit(fileConfig?.DistanceUnit);
 
 VehiclesController.Region = effectiveRegion;
 VehiclesController.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
@@ -113,12 +114,24 @@ static string NormalizeRegion(string? value)
     var region = (value ?? string.Empty).Trim().ToLowerInvariant();
     return region switch
     {
-        "norway"  => "norway",
-        "europe"  => "europe",
-        "america" => "america",
-        "usa"     => "usa",
-        "gb"      => "gb",
-        _         => "sweden"
+        "norway"    => "norway",
+        "europe"    => "europe",
+        "america"   => "america",
+        "usa"       => "usa",
+        "gb"        => "gb",
+        "worldwide" => "worldwide",
+        _           => "sweden"
+    };
+}
+
+static string? NormalizeDistanceUnit(string? value)
+{
+    var unit = (value ?? string.Empty).Trim().ToLowerInvariant();
+    return unit switch
+    {
+        "miles" => "miles",
+        "km"    => "km",
+        _       => null
     };
 }
 
@@ -187,6 +200,8 @@ app.MapGet("/api/runtime-config.js", (HttpContext context) =>
     var js = $"window.__APP_REGION__ = '{VehiclesController.Region}';";
     if (!string.IsNullOrEmpty(activeCurrency))
         js += $"\nwindow.__APP_CURRENCY__ = '{activeCurrency}';";
+    if (!string.IsNullOrEmpty(activeDistanceUnit))
+        js += $"\nwindow.__APP_DISTANCE_UNIT__ = '{activeDistanceUnit}';";
     return Results.Content(js, "application/javascript");
 });
 
@@ -201,6 +216,7 @@ app.MapGet("/api/setup-status", () =>
         ConfigFilePath = configFilePath,
         CurrentRegion = VehiclesController.Region,
         CurrentCurrency = activeCurrency,
+        CurrentDistanceUnit = activeDistanceUnit,
         CurrentPort = currentPort,
         DebugSavePlaywrightHtml = VehiclesController.DebugSaveHtml,
         IsContainer = runningInContainer,
@@ -224,6 +240,7 @@ app.MapPost("/api/app-config", (SaveAppConfigurationDto request) =>
     var normalizedCurrency = string.IsNullOrWhiteSpace(request.Currency)
         ? null
         : request.Currency.Trim().ToUpperInvariant();
+    var normalizedDistanceUnit = NormalizeDistanceUnit(request.DistanceUnit);
 
     var normalizedPort = (request.Port is int rp && rp >= 1024 && rp <= 65535) ? rp : (int?)null;
 
@@ -231,6 +248,7 @@ app.MapPost("/api/app-config", (SaveAppConfigurationDto request) =>
     {
         Region = normalizedRegion,
         Currency = normalizedCurrency,
+        DistanceUnit = normalizedDistanceUnit,
         Port = normalizedPort,
         Debug = new AppFileDebugConfig
         {
@@ -247,8 +265,9 @@ app.MapPost("/api/app-config", (SaveAppConfigurationDto request) =>
     VehiclesController.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
     VehiclesController.DebugSaveHtml = request.DebugSavePlaywrightHtml;
     activeCurrency = normalizedCurrency;
+    activeDistanceUnit = normalizedDistanceUnit;
 
-    AppLog($"Config saved — Region: {normalizedRegion}  Currency: {normalizedCurrency ?? "(region default)"}  DebugSaveHtml: {request.DebugSavePlaywrightHtml}");
+    AppLog($"Config saved — Region: {normalizedRegion}  Currency: {normalizedCurrency ?? "(region default)"}  DistanceUnit: {normalizedDistanceUnit ?? "(region default)"}  DebugSaveHtml: {request.DebugSavePlaywrightHtml}");
 
     return Results.Ok(new SaveAppConfigurationResultDto
     {
@@ -259,7 +278,15 @@ app.MapPost("/api/app-config", (SaveAppConfigurationDto request) =>
 
 app.MapControllers();
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // Force revalidation on every request so Electron's Chromium cache
+        // never serves stale JS/CSS after an app update.
+        ctx.Context.Response.Headers["Cache-Control"] = "no-cache, must-revalidate";
+    }
+});
 app.MapFallbackToFile("index.html");
 
 app.Run();
@@ -439,6 +466,7 @@ sealed class AppFileConfig
 {
     public string? Region { get; set; }
     public string? Currency { get; set; }
+    public string? DistanceUnit { get; set; }
     public int? Port { get; set; }
     public AppFileDebugConfig? Debug { get; set; }
 }
@@ -455,6 +483,7 @@ sealed class AppSetupStatusDto
     public string ConfigFilePath { get; set; } = string.Empty;
     public string CurrentRegion { get; set; } = "sweden";
     public string? CurrentCurrency { get; set; }
+    public string? CurrentDistanceUnit { get; set; }
     public int CurrentPort { get; set; } = 2233;
     public bool DebugSavePlaywrightHtml { get; set; }
     public bool IsContainer { get; set; }
@@ -472,6 +501,7 @@ sealed class SaveAppConfigurationDto
 {
     public string? Region { get; set; }
     public string? Currency { get; set; }
+    public string? DistanceUnit { get; set; }
     public int? Port { get; set; }
     public bool DebugSavePlaywrightHtml { get; set; }
 }

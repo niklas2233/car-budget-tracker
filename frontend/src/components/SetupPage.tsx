@@ -13,6 +13,7 @@ const CLOSE_TO_TRAY_KEY = 'carbudget.closeToTray';
 const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
   const [region, setRegion] = useState(setupStatus.currentRegion || 'sweden');
   const [currency, setCurrency] = useState(setupStatus.currentCurrency || '');
+  const [distanceUnit, setDistanceUnit] = useState(setupStatus.currentDistanceUnit || 'km');
   const [port, setPort] = useState(String(setupStatus.currentPort || 2233));
   const [debugSavePlaywrightHtml, setDebugSavePlaywrightHtml] = useState(setupStatus.debugSavePlaywrightHtml || false);
   const [closeToTray, setCloseToTray] = useState(() => localStorage.getItem(CLOSE_TO_TRAY_KEY) === 'true');
@@ -42,6 +43,7 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
       await appConfigApi.saveConfig({
         region,
         currency: currency || undefined,
+        distanceUnit: region === 'worldwide' ? distanceUnit : undefined,
         port: validPort,
         debugSavePlaywrightHtml,
       });
@@ -86,22 +88,60 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
               <option value="america">America</option>
               <option value="usa">USA</option>
               <option value="gb">Great Britain</option>
+              <option value="worldwide">Worldwide (custom units)</option>
             </select>
           </label>
 
-          <label>
-            Currency override
-            <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-              <option value="">Region default (SEK / NOK / EUR / USD)</option>
-              <option value="SEK">SEK — Swedish Krona</option>
-              <option value="NOK">NOK — Norwegian Krone</option>
-              <option value="EUR">EUR — Euro</option>
-              <option value="DKK">DKK — Danish Krone</option>
-              <option value="GBP">GBP — British Pound</option>
-              <option value="USD">USD — US Dollar</option>
-              <option value="CHF">CHF — Swiss Franc</option>
-            </select>
-          </label>
+          {region === 'worldwide' ? (
+            <>
+              <label>
+                Currency
+                <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                  <option value="">USD — US Dollar</option>
+                  <option value="SEK">SEK — Swedish Krona</option>
+                  <option value="NOK">NOK — Norwegian Krone</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="DKK">DKK — Danish Krone</option>
+                  <option value="GBP">GBP — British Pound</option>
+                  <option value="USD">USD — US Dollar</option>
+                  <option value="CHF">CHF — Swiss Franc</option>
+                  <option value="AUD">AUD — Australian Dollar</option>
+                  <option value="CAD">CAD — Canadian Dollar</option>
+                  <option value="JPY">JPY — Japanese Yen</option>
+                  <option value="CNY">CNY — Chinese Yuan</option>
+                  <option value="INR">INR — Indian Rupee</option>
+                  <option value="BRL">BRL — Brazilian Real</option>
+                  <option value="MXN">MXN — Mexican Peso</option>
+                  <option value="ZAR">ZAR — South African Rand</option>
+                  <option value="AED">AED — UAE Dirham</option>
+                  <option value="SGD">SGD — Singapore Dollar</option>
+                  <option value="NZD">NZD — New Zealand Dollar</option>
+                </select>
+              </label>
+
+              <label>
+                Distance unit
+                <select value={distanceUnit} onChange={(e) => setDistanceUnit(e.target.value)}>
+                  <option value="km">Kilometres (km)</option>
+                  <option value="miles">Miles</option>
+                </select>
+              </label>
+            </>
+          ) : (
+            <label>
+              Currency override
+              <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                <option value="">Region default (SEK / NOK / EUR / USD)</option>
+                <option value="SEK">SEK — Swedish Krona</option>
+                <option value="NOK">NOK — Norwegian Krone</option>
+                <option value="EUR">EUR — Euro</option>
+                <option value="DKK">DKK — Danish Krone</option>
+                <option value="GBP">GBP — British Pound</option>
+                <option value="USD">USD — US Dollar</option>
+                <option value="CHF">CHF — Swiss Franc</option>
+              </select>
+            </label>
+          )}
 
           {!isInitialSetup && isElectron && !setupStatus.isContainer && (
             <fieldset className="setup-fieldset">
