@@ -99,7 +99,7 @@ var debugFromEnv = string.Equals(debugEnv, "true", StringComparison.OrdinalIgnor
     || string.Equals(debugEnv, "1", StringComparison.OrdinalIgnoreCase);
 
 var currencyEnv = Environment.GetEnvironmentVariable("currency")?.Trim().ToUpperInvariant();
-var distanceUnitEnv = Environment.GetEnvironmentVariable("distanceunit")?.Trim().ToLowerInvariant();
+var distanceUnitEnv = Environment.GetEnvironmentVariable("unit")?.Trim().ToLowerInvariant();
 
 // activeCurrency / activeDistanceUnit are mutable so the POST handler can update them at runtime.
 // Env vars take priority; fall back to config file, then null (= derive from region in frontend).
