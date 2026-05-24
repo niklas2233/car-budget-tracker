@@ -35,6 +35,9 @@ yarn-error.log
 *.sqlite
 *.sqlite3
 
+# Graphify
+graphify-out/
+
 # Temp files
 *.tmp
 *.temp

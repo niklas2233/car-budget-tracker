@@ -83,8 +83,18 @@ Set `region` in `docker-compose.yml` to control currency, distance unit, and num
 | America | `america` | USD | km |
 | USA | `usa` | USD | miles |
 | Great Britain | `gb` | GBP | miles |
+| Worldwide | `worldwide` | configurable | configurable |
 
-You can also override the currency independently with the `currency` env var (any string is accepted):
+**Worldwide region** lets you choose currency and distance unit freely:
+
+```yaml
+environment:
+  region: worldwide
+  currency: CHF      # any supported currency code
+  unit: km           # km or miles
+```
+
+You can also override the currency independently for the other regions with the `currency` env var:
 
 ```yaml
 environment:
@@ -115,7 +125,9 @@ volumes:
 1. Open a terminal in the project root directory
 2. Run the API:
    ```powershell
-   $env:region='europe'   # sweden | norway | europe | america | usa | gb
+   $env:region='europe'   # sweden | norway | europe | america | usa | gb | worldwide
+   $env:currency='CHF'    # optional currency override
+   $env:unit='km'         # km or miles (worldwide region only)
    cd src/CarBudget.Api
    dotnet run
    ```
