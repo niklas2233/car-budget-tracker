@@ -1,7 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
+  getElectronSettings: () => ipcRenderer.invoke('get-electron-settings'),
   setCloseToTray: (enabled) => ipcRenderer.send('set-close-to-tray', enabled),
+  setStartInTray: (enabled) => ipcRenderer.send('set-start-in-tray', enabled),
   onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (_, info) => callback(info)),
   setBackendPort: (port) => ipcRenderer.send('set-backend-port', port),
   downloadAndInstallUpdate: (downloadUrl) => ipcRenderer.send('download-and-install-update', downloadUrl),

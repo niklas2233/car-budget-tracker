@@ -40,6 +40,8 @@ const Dashboard: React.FC = () => {
 	const [isExportMode, setIsExportMode] = useState(false);
 	const importInputRef = useRef<HTMLInputElement>(null);
   const [hoverPreview, setHoverPreview] = useState<HoverPreview | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('name-asc');
   const navigate = useNavigate();
 
   const loadVehicles = useCallback(async (retries = 3) => {
@@ -128,6 +130,44 @@ const Dashboard: React.FC = () => {
 	  ? vehicles
 	  : vehicles.filter((vehicle) => !isVehicleSold(vehicle));
 
+  const searchedVehicles = searchQuery.trim()
+    ? filteredVehicles.filter((vehicle) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          getVehicleDisplayName(vehicle).toLowerCase().includes(q) ||
+          (vehicle.licensePlate ?? '').toLowerCase().includes(q) ||
+          (vehicle.vin ?? '').toLowerCase().includes(q)
+        );
+      })
+    : filteredVehicles;
+
+  const sortedVehicles = [...searchedVehicles].sort((a, b) => {
+    switch (sortOption) {
+      case 'name-asc':
+        return getVehicleDisplayName(a).localeCompare(getVehicleDisplayName(b));
+      case 'name-desc':
+        return getVehicleDisplayName(b).localeCompare(getVehicleDisplayName(a));
+      case 'date-newest':
+        return new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime();
+      case 'date-oldest':
+        return new Date(a.purchaseDate).getTime() - new Date(b.purchaseDate).getTime();
+      case 'price-asc':
+        return a.purchasePrice - b.purchasePrice;
+      case 'price-desc':
+        return b.purchasePrice - a.purchasePrice;
+      case 'expenses-desc':
+        return b.totalExpenses - a.totalExpenses;
+      case 'expenses-asc':
+        return a.totalExpenses - b.totalExpenses;
+      case 'profit-desc':
+        return calculateProfitLoss(b) - calculateProfitLoss(a);
+      case 'profit-asc':
+        return calculateProfitLoss(a) - calculateProfitLoss(b);
+      default:
+        return 0;
+    }
+  });
+
   const toggleVehicleSelection = (vehicleId: number) => {
 	setSelectedVehicleIds((previous) => (
 	  previous.includes(vehicleId)
@@ -136,18 +176,18 @@ const Dashboard: React.FC = () => {
 	));
   };
 
-	const allVehiclesSelected = filteredVehicles.length > 0
-	  && filteredVehicles.every((vehicle) => selectedVehicleIds.includes(vehicle.id));
+	const allVehiclesSelected = sortedVehicles.length > 0
+	  && sortedVehicles.every((vehicle) => selectedVehicleIds.includes(vehicle.id));
 
 	const handleToggleSelectAll = () => {
-	  const filteredVehicleIds = filteredVehicles.map((vehicle) => vehicle.id);
+	  const visibleVehicleIds = sortedVehicles.map((vehicle) => vehicle.id);
 
 	  if (allVehiclesSelected) {
-		setSelectedVehicleIds((previous) => previous.filter((id) => !filteredVehicleIds.includes(id)));
+		setSelectedVehicleIds((previous) => previous.filter((id) => !visibleVehicleIds.includes(id)));
 		return;
 	  }
 
-	  setSelectedVehicleIds((previous) => Array.from(new Set([...previous, ...filteredVehicleIds])));
+	  setSelectedVehicleIds((previous) => Array.from(new Set([...previous, ...visibleVehicleIds])));
 	};
 
   const handleExportSelectedVehicles = async () => {
@@ -284,7 +324,40 @@ const Dashboard: React.FC = () => {
 				</div>
 	  </div>
 
-	  {vehicles.length === 0 ? (
+	  <div className="dashboard-controls">
+		  <div className="dashboard-search-wrap">
+			<span className="dashboard-search-icon" aria-hidden="true">&#128269;</span>
+			<input
+			  type="search"
+			  className="dashboard-search-input"
+			  placeholder="Search by name, plate, or VIN…"
+			  value={searchQuery}
+			  onChange={(e) => setSearchQuery(e.target.value)}
+			/>
+		  </div>
+		  <div className="dashboard-sort-wrap">
+			<label className="dashboard-sort-label" htmlFor="dashboard-sort">Sort:</label>
+			<select
+			  id="dashboard-sort"
+			  className="dashboard-sort-select"
+			  value={sortOption}
+			  onChange={(e) => setSortOption(e.target.value)}
+			>
+			  <option value="name-asc">Name (A–Z)</option>
+			  <option value="name-desc">Name (Z–A)</option>
+			  <option value="date-newest">Purchase Date (Newest)</option>
+			  <option value="date-oldest">Purchase Date (Oldest)</option>
+			  <option value="price-asc">Purchase Price (Low–High)</option>
+			  <option value="price-desc">Purchase Price (High–Low)</option>
+			  <option value="expenses-desc">Total Expenses (High–Low)</option>
+			  <option value="expenses-asc">Total Expenses (Low–High)</option>
+			  <option value="profit-desc">Result (Best–Worst)</option>
+			  <option value="profit-asc">Result (Worst–Best)</option>
+			</select>
+		  </div>
+		</div>
+
+  {vehicles.length === 0 ? (
 		<div className="empty-state">
 		  <h2>No vehicles yet</h2>
 		  <p>Add your first vehicle to start tracking expenses</p>
@@ -292,14 +365,19 @@ const Dashboard: React.FC = () => {
 			Add Vehicle
 		  </button>
 		</div>
-	  ) : (filteredVehicles.length === 0 ? (
+	  ) : filteredVehicles.length === 0 ? (
 		<div className="empty-state">
 		  <h2>No matching vehicles</h2>
 		  <p>Turn on "Show sold cars" to include sold vehicles in the dashboard.</p>
 		</div>
+	  ) : sortedVehicles.length === 0 ? (
+		<div className="empty-state">
+		  <h2>No results</h2>
+		  <p>No vehicles match "<strong>{searchQuery}</strong>". Try a different name, plate, or VIN.</p>
+		</div>
 	  ) : (
 		<div className="vehicle-grid">
-		  {filteredVehicles.map((vehicle) => (
+		  {sortedVehicles.map((vehicle) => (
 			<div key={vehicle.id} className="vehicle-card">
 			  {isExportMode && (
 				<label className="vehicle-export-select">
@@ -395,7 +473,7 @@ const Dashboard: React.FC = () => {
 			</div>
 		  ))}
 		</div>
-	  ))}
+	  )}
 
 	  {hoverPreview && (
 		<div

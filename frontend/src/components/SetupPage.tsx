@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { appConfigApi, getApiErrorMessage } from '../api';
 import { AppSetupStatusDto } from '../types';
 import './SetupPage.css';
@@ -8,25 +8,37 @@ type SetupPageProps = {
   onSaved: () => void;
 };
 
-const CLOSE_TO_TRAY_KEY = 'carbudget.closeToTray';
-
 const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
   const [region, setRegion] = useState(setupStatus.currentRegion || 'sweden');
   const [currency, setCurrency] = useState(setupStatus.currentCurrency || '');
   const [distanceUnit, setDistanceUnit] = useState(setupStatus.currentDistanceUnit || 'km');
   const [port, setPort] = useState(String(setupStatus.currentPort || 2233));
   const [debugSavePlaywrightHtml, setDebugSavePlaywrightHtml] = useState(setupStatus.debugSavePlaywrightHtml || false);
-  const [closeToTray, setCloseToTray] = useState(() => localStorage.getItem(CLOSE_TO_TRAY_KEY) === 'true');
+  const [closeToTray, setCloseToTray] = useState(false);
+  const [startInTray, setStartInTray] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [restartRequired, setRestartRequired] = useState(false);
 
   const isElectron = !!(window as any).api?.setCloseToTray;
 
+  useEffect(() => {
+    if ((window as any).api?.getElectronSettings) {
+      (window as any).api.getElectronSettings().then((s: { closeToTray: boolean; startInTray: boolean }) => {
+        setCloseToTray(!!s.closeToTray);
+        setStartInTray(!!s.startInTray);
+      });
+    }
+  }, []);
+
   const handleCloseToTrayChange = (checked: boolean) => {
     setCloseToTray(checked);
-    localStorage.setItem(CLOSE_TO_TRAY_KEY, String(checked));
     (window as any).api?.setCloseToTray(checked);
+  };
+
+  const handleStartInTrayChange = (checked: boolean) => {
+    setStartInTray(checked);
+    (window as any).api?.setStartInTray(checked);
   };
 
   const isInitialSetup = setupStatus.setupRequired;
@@ -162,7 +174,7 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
             </fieldset>
           )}
 
-          {isElectron && !setupStatus.isContainer && (
+          {isElectron && !setupStatus.isContainer && !isInitialSetup && (
             <fieldset className="setup-fieldset">
               <legend>Window</legend>
               <label className="setup-checkbox-label">
@@ -176,6 +188,19 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
               {closeToTray && (
                 <p className="setup-hint">
                   Closing the window will hide it to the system tray. Use the tray icon to reopen or quit.
+                </p>
+              )}
+              <label className="setup-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={startInTray}
+                  onChange={(e) => handleStartInTrayChange(e.target.checked)}
+                />
+                Start minimized to tray
+              </label>
+              {startInTray && (
+                <p className="setup-hint">
+                  The app will start in the background. Click the tray icon to open it.
                 </p>
               )}
             </fieldset>

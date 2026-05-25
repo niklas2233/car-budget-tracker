@@ -74,11 +74,13 @@ let mainWindow;
 let tray;
 let isQuitting = false;
 let closeToTray = readSettings().closeToTray === true;
+let startInTray = readSettings().startInTray === true;
 let backendProcess = null;
 let resolvedDataDir = null;
 const backendPort = readSettings().port || 2233;
 
 log(`closeToTray from settings: ${closeToTray}`);
+log(`startInTray from settings: ${startInTray}`);
 
 function getBackendExePath() {
   const exeName = process.platform === 'win32' ? 'CarBudget.Api.exe' : 'CarBudget.Api';
@@ -257,8 +259,12 @@ function createWindow(initialUrl) {
   mainWindow.loadURL(url);
 
   mainWindow.once('ready-to-show', () => {
-    log('ready-to-show — showing window');
-    mainWindow.show();
+    if (startInTray && !isDev) {
+      log('ready-to-show — startInTray enabled, keeping window hidden');
+    } else {
+      log('ready-to-show — showing window');
+      mainWindow.show();
+    }
   });
 
   mainWindow.webContents.on('did-finish-load', () => {
@@ -477,12 +483,25 @@ ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url);
 });
 
+ipcMain.handle('get-electron-settings', () => ({
+  closeToTray,
+  startInTray,
+}));
+
 ipcMain.on('set-close-to-tray', (event, value) => {
   closeToTray = !!value;
   const s = readSettings();
   s.closeToTray = closeToTray;
   writeSettings(s);
   log(`set-close-to-tray → ${closeToTray}`);
+});
+
+ipcMain.on('set-start-in-tray', (event, value) => {
+  startInTray = !!value;
+  const s = readSettings();
+  s.startInTray = startInTray;
+  writeSettings(s);
+  log(`set-start-in-tray → ${startInTray}`);
 });
 
 ipcMain.on('set-backend-port', (event, port) => {
