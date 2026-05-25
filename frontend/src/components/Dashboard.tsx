@@ -42,6 +42,7 @@ const Dashboard: React.FC = () => {
   const [hoverPreview, setHoverPreview] = useState<HoverPreview | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('name-asc');
+  const [importConflicts, setImportConflicts] = useState<{ payload: VehicleExportPackageDto; label: string }[]>([]);
   const navigate = useNavigate();
 
   const loadVehicles = useCallback(async (retries = 3) => {
@@ -245,32 +246,63 @@ const Dashboard: React.FC = () => {
 	importInputRef.current?.click();
   };
 
+  const getVehicleLabel = (pkg: VehicleExportPackageDto) => {
+    const v = pkg.vehicle;
+    const name = [v.year, v.make, v.model].filter(Boolean).join(' ');
+    const id = v.licensePlate || v.vin || '';
+    return id ? `${name} (${id})` : name;
+  };
+
   const handleImportVehicle = async (event: React.ChangeEvent<HTMLInputElement>) => {
-	const file = event.target.files?.[0];
-	if (!file) {
-	  return;
-	}
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-	try {
-	  const text = await file.text();
-	  const parsed = JSON.parse(text) as VehicleExportPackageDto | { vehicles?: VehicleExportPackageDto[] };
+    let payloads: VehicleExportPackageDto[];
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as VehicleExportPackageDto | { vehicles?: VehicleExportPackageDto[] };
+      payloads = Array.isArray((parsed as { vehicles?: VehicleExportPackageDto[] }).vehicles)
+        ? (parsed as { vehicles: VehicleExportPackageDto[] }).vehicles
+        : [parsed as VehicleExportPackageDto];
+    } catch {
+      alert('Failed to import JSON. Make sure the file is a valid car export.');
+      event.target.value = '';
+      return;
+    }
 
-	  if (parsed && typeof parsed === 'object' && Array.isArray((parsed as { vehicles?: VehicleExportPackageDto[] }).vehicles)) {
-		for (const vehiclePayload of (parsed as { vehicles: VehicleExportPackageDto[] }).vehicles) {
-		  await vehicleApi.importVehicle(vehiclePayload);
-		}
-	  } else {
-		await vehicleApi.importVehicle(parsed as VehicleExportPackageDto);
-	  }
+    const conflicts: { payload: VehicleExportPackageDto; label: string }[] = [];
+    for (const payload of payloads) {
+      try {
+        await vehicleApi.importVehicle(payload);
+      } catch (error: any) {
+        if (error?.response?.status === 409) {
+          conflicts.push({ payload, label: getVehicleLabel(payload) });
+        } else {
+          alert(`Failed to import "${getVehicleLabel(payload)}": ${error?.response?.data || error?.message || 'Unknown error'}`);
+        }
+      }
+    }
 
-	  await loadVehicles();
-	  alert('Vehicle imported successfully.');
-	} catch (error) {
-	  console.error('Error importing vehicle:', error);
-	  alert('Failed to import JSON. Make sure the file is a valid car export.');
-	} finally {
-	  event.target.value = '';
-	}
+    await loadVehicles();
+    event.target.value = '';
+
+    if (conflicts.length > 0) {
+      setImportConflicts(conflicts);
+    } else {
+      alert(`${payloads.length === 1 ? 'Vehicle' : `${payloads.length} vehicles`} imported successfully.`);
+    }
+  };
+
+  const handleOverwriteConflicts = async (toOverwrite: { payload: VehicleExportPackageDto; label: string }[]) => {
+    setImportConflicts([]);
+    for (const { payload, label } of toOverwrite) {
+      try {
+        await vehicleApi.importVehicle(payload, true);
+      } catch (error: any) {
+        alert(`Failed to overwrite "${label}": ${error?.response?.data || error?.message || 'Unknown error'}`);
+      }
+    }
+    await loadVehicles();
   };
 
   if (loading) {
@@ -488,6 +520,25 @@ const Dashboard: React.FC = () => {
 		  />
 		</div>
 	  )}
+
+      {importConflicts.length > 0 && (
+        <div className="import-conflict-backdrop">
+          <div className="import-conflict-modal">
+            <h3>Vehicle{importConflicts.length > 1 ? 's' : ''} already exist</h3>
+            <p>The following vehicle{importConflicts.length > 1 ? 's' : ''} already exist in your database:</p>
+            <ul className="import-conflict-list">
+              {importConflicts.map((c, i) => (
+                <li key={i}>{c.label}</li>
+              ))}
+            </ul>
+            <p>Do you want to overwrite {importConflicts.length > 1 ? 'them' : 'it'}?</p>
+            <div className="import-conflict-actions">
+              <button className="btn-secondary" onClick={() => setImportConflicts([])}>Skip</button>
+              <button className="btn-danger" onClick={() => handleOverwriteConflicts(importConflicts)}>Overwrite</button>
+            </div>
+          </div>
+        </div>
+      )}
 	</div>
   );
 };

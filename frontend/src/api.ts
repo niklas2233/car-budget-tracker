@@ -51,7 +51,7 @@ export const vehicleApi = {
   getById: (id: number) => api.get<Vehicle>(`/vehicles/${id}`),
   getByLicensePlate: (licensePlate: string) => api.get<Vehicle>(`/vehicles/by-license-plate/${encodeURIComponent(licensePlate)}`),
   exportVehicle: (id: number) => api.get<VehicleExportPackageDto>(`/vehicles/${id}/export`),
-  importVehicle: (payload: VehicleExportPackageDto) => api.post<Vehicle>('/vehicles/import', payload),
+  importVehicle: (payload: VehicleExportPackageDto, overwrite = false) => api.post<Vehicle>(`/vehicles/import${overwrite ? '?overwrite=true' : ''}`, payload),
   lookupFromCarInfo: (licensePlate: string) => api.get<VehicleLookupDto>(`/vehicles/lookup-car-info/${encodeURIComponent(licensePlate)}`),
   refreshFromCarInfo: (licensePlate: string) => api.post<VehicleLookupDto>(`/vehicles/lookup-car-info/${encodeURIComponent(licensePlate)}/refresh`),
   getLookupCache: () => api.get<VehicleLookupCacheDto[]>('/vehicles/lookup-cache'),

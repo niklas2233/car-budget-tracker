@@ -446,7 +446,7 @@ public class VehiclesController : ControllerBase
     }
 
     [HttpPost("import")]
-    public async Task<ActionResult<VehicleDto>> ImportVehicle([FromBody] VehicleExportPackageDto dto)
+    public async Task<ActionResult<VehicleDto>> ImportVehicle([FromBody] VehicleExportPackageDto dto, [FromQuery] bool overwrite = false)
     {
         if (dto.Vehicle == null)
             return BadRequest("Vehicle payload is required.");
@@ -454,18 +454,37 @@ public class VehiclesController : ControllerBase
         var normalizedVin = string.IsNullOrWhiteSpace(dto.Vehicle.VIN) ? null : dto.Vehicle.VIN.Trim().ToUpperInvariant();
         var normalizedLicensePlate = string.IsNullOrWhiteSpace(dto.Vehicle.LicensePlate) ? null : dto.Vehicle.LicensePlate.Trim().ToUpperInvariant();
 
-        if (!string.IsNullOrWhiteSpace(normalizedVin))
+        if (overwrite)
         {
-            var existingByVin = await _dbContext.Vehicles.FirstOrDefaultAsync(v => v.VIN == normalizedVin);
-            if (existingByVin != null)
-                return Conflict("A vehicle with the same VIN already exists.");
+            var idsToDelete = new HashSet<int>();
+            if (!string.IsNullOrWhiteSpace(normalizedVin))
+            {
+                var existing = await _dbContext.Vehicles.FirstOrDefaultAsync(v => v.VIN == normalizedVin);
+                if (existing != null) idsToDelete.Add(existing.Id);
+            }
+            if (!string.IsNullOrWhiteSpace(normalizedLicensePlate))
+            {
+                var existing = await _dbContext.Vehicles.FirstOrDefaultAsync(v => v.LicensePlate == normalizedLicensePlate);
+                if (existing != null) idsToDelete.Add(existing.Id);
+            }
+            foreach (var id in idsToDelete)
+                await _vehicleRepository.DeleteAsync(id);
         }
-
-        if (!string.IsNullOrWhiteSpace(normalizedLicensePlate))
+        else
         {
-            var existingByPlate = await _dbContext.Vehicles.FirstOrDefaultAsync(v => v.LicensePlate == normalizedLicensePlate);
-            if (existingByPlate != null)
-                return Conflict("A vehicle with the same license plate already exists.");
+            if (!string.IsNullOrWhiteSpace(normalizedVin))
+            {
+                var existingByVin = await _dbContext.Vehicles.FirstOrDefaultAsync(v => v.VIN == normalizedVin);
+                if (existingByVin != null)
+                    return Conflict("A vehicle with the same VIN already exists.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalizedLicensePlate))
+            {
+                var existingByPlate = await _dbContext.Vehicles.FirstOrDefaultAsync(v => v.LicensePlate == normalizedLicensePlate);
+                if (existingByPlate != null)
+                    return Conflict("A vehicle with the same license plate already exists.");
+            }
         }
 
         var vehicle = new Vehicle
