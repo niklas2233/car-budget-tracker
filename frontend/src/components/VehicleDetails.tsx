@@ -166,6 +166,7 @@ const VehicleDetails: React.FC = () => {
 	  <div className="vehicle-info-card">
 		<h2>Vehicle Information</h2>
 		<div className="info-grid">
+		  {/* Row 1: Make, Model, Year, License Plate, VIN */}
 		  <div className="info-item">
 			<span className="info-label">Make</span>
 			<span className="info-value">{vehicle.make}</span>
@@ -178,40 +179,36 @@ const VehicleDetails: React.FC = () => {
 			<span className="info-label">Year</span>
 			<span className="info-value">{vehicle.year}</span>
 		  </div>
-		  {vehicle.licensePlate && (
-			<div className="info-item">
-			  <span className="info-label">License Plate</span>
-			  <span className="info-value">{vehicle.licensePlate}</span>
-			</div>
-		  )}
-		  {vehicle.vin && (
-			<div className="info-item">
-			  <span className="info-label">VIN</span>
-			  <span className="info-value">{vehicle.vin}</span>
-			</div>
-		  )}
-		  {vehicle.mileage && (
-			<div className="info-item">
-			  <span className="info-label">Mileage</span>
-			  <span className="info-value">{formatDistance(vehicle.mileage)}</span>
-			</div>
-		  )}
 		  <div className="info-item">
-			<span className="info-label">Purchase Price</span>
-			<span className="info-value">{formatPurchasePrice(vehicle.purchasePrice)}</span>
+			<span className="info-label">License Plate</span>
+			<span className="info-value">{vehicle.licensePlate || '-'}</span>
+		  </div>
+		  <div className="info-item">
+			<span className="info-label">VIN</span>
+			<span className="info-value">{vehicle.vin || '-'}</span>
+		  </div>
+		  {/* Row 2: Mileage, Purchase Date, Sell Date, Purchase Price, Sell Price */}
+		  <div className="info-item">
+			<span className="info-label">Mileage</span>
+			<span className="info-value">{vehicle.mileage ? formatDistance(vehicle.mileage) : '-'}</span>
 		  </div>
 		  <div className="info-item">
 			<span className="info-label">Purchase Date</span>
 			<span className="info-value">{formatDate(vehicle.purchaseDate)}</span>
 		  </div>
 		  <div className="info-item">
-			<span className="info-label">Sell Price</span>
-			<span className="info-value">{vehicle.sellPrice != null ? formatPurchasePrice(vehicle.sellPrice) : '-'}</span>
-		  </div>
-		  <div className="info-item">
 			<span className="info-label">Sell Date</span>
 			<span className="info-value">{vehicle.sellDate ? formatDate(vehicle.sellDate) : '-'}</span>
 		  </div>
+		  <div className="info-item">
+			<span className="info-label">Purchase Price</span>
+			<span className="info-value">{formatPurchasePrice(vehicle.purchasePrice)}</span>
+		  </div>
+		  <div className="info-item">
+			<span className="info-label">Sell Price</span>
+			<span className="info-value">{vehicle.sellPrice != null ? formatPurchasePrice(vehicle.sellPrice) : '-'}</span>
+		  </div>
+		  {/* Row 3: Total Expenses, Total Cost, Result */}
 		  <div className="info-item">
 			<span className="info-label">Total Expenses</span>
 			<span className="info-value expense">{formatCurrency(vehicle.totalExpenses)}</span>

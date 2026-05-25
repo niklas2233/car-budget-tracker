@@ -67,7 +67,7 @@ function App() {
           <div className="App-header-left">
             <Link to="/" className="App-home-link" aria-label="Go to dashboard">
               <h1>🚗 Car Budget Manager</h1>
-              <p>Track your vehicle expenses like a pro</p>
+              <p>Track your vehicle expenses like a pro <span className="App-version">v{__APP_VERSION__}</span></p>
             </Link>
             <nav className="App-nav" aria-label="Primary navigation">
               <Link to="/" className="App-nav-link">Dashboard</Link>
