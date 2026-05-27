@@ -488,6 +488,13 @@ ipcMain.handle('get-electron-settings', () => ({
   startInTray,
 }));
 
+ipcMain.on('refocus-window', () => {
+  if (mainWindow) {
+    mainWindow.focus();
+    mainWindow.webContents.focus();
+  }
+});
+
 ipcMain.on('set-close-to-tray', (event, value) => {
   closeToTray = !!value;
   const s = readSettings();

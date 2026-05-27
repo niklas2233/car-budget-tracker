@@ -37,13 +37,20 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
 	const [showSoldVehicles, setShowSoldVehicles] = useState(true);
 	const [selectedVehicleIds, setSelectedVehicleIds] = useState<number[]>([]);
-	const [isExportMode, setIsExportMode] = useState(false);
+	const [isSelectMode, setIsSelectMode] = useState(false);
 	const importInputRef = useRef<HTMLInputElement>(null);
   const [hoverPreview, setHoverPreview] = useState<HoverPreview | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState('name-asc');
+  const [sortOption, setSortOption] = useState(() => localStorage.getItem('carbudget.sortOption') || 'name-asc');
   const [importConflicts, setImportConflicts] = useState<{ payload: VehicleExportPackageDto; label: string }[]>([]);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ type: 'single'; id: number } | { type: 'bulk' } | null>(null);
   const navigate = useNavigate();
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const loadVehicles = useCallback(async (retries = 3) => {
 	try {
@@ -56,7 +63,7 @@ const Dashboard: React.FC = () => {
 		await new Promise(resolve => setTimeout(resolve, 1000));
 		await loadVehicles(retries - 1);
 	  } else {
-		alert('Failed to load vehicles. Make sure the API is running.');
+		showToast('Failed to load vehicles. Make sure the API is running.', 'error');
 	  }
 	} finally {
 	  setLoading(false);
@@ -71,16 +78,8 @@ const Dashboard: React.FC = () => {
 	loadVehicles();
   }, [loadVehicles]);
 
-  const handleDeleteVehicle = async (id: number) => {
-	if (window.confirm('Are you sure you want to delete this vehicle?')) {
-	  try {
-		await vehicleApi.delete(id);
-		loadVehicles();
-	  } catch (error) {
-		console.error('Error deleting vehicle:', error);
-		alert('Failed to delete vehicle');
-	  }
-	}
+  const handleDeleteVehicle = (id: number) => {
+    setPendingDelete({ type: 'single', id });
   };
 
   const formatPurchasePrice = (amount: number) => {
@@ -191,14 +190,9 @@ const Dashboard: React.FC = () => {
 	  setSelectedVehicleIds((previous) => Array.from(new Set([...previous, ...visibleVehicleIds])));
 	};
 
-  const handleExportSelectedVehicles = async () => {
-	if (!isExportMode) {
-	  setIsExportMode(true);
-	  return;
-	}
-
+  const handleExportSelected = async () => {
 	if (selectedVehicleIds.length === 0) {
-	  alert('Select at least one vehicle to export.');
+	  showToast('Select at least one vehicle to export.', 'error');
 	  return;
 	}
 
@@ -230,16 +224,43 @@ const Dashboard: React.FC = () => {
 	  link.remove();
 	  window.URL.revokeObjectURL(url);
 	  setSelectedVehicleIds([]);
-	  setIsExportMode(false);
+	  setIsSelectMode(false);
 	} catch (error) {
 	  console.error('Error exporting selected vehicles:', error);
-	  alert('Failed to export selected vehicles.');
+	  showToast('Failed to export selected vehicles.', 'error');
 	}
   };
 
-	const handleCancelExportSelection = () => {
+  const handleDeleteSelected = () => {
+    if (selectedVehicleIds.length === 0) {
+      showToast('Select at least one vehicle to delete.', 'error');
+      return;
+    }
+    setPendingDelete({ type: 'bulk' });
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const ids = pendingDelete.type === 'single' ? [pendingDelete.id] : selectedVehicleIds;
+    setPendingDelete(null);
+    try {
+      await Promise.all(ids.map((id) => vehicleApi.delete(id)));
+      if (pendingDelete.type === 'bulk') {
+        setSelectedVehicleIds([]);
+        setIsSelectMode(false);
+      }
+      await loadVehicles();
+      showToast(`${ids.length === 1 ? 'Vehicle' : `${ids.length} vehicles`} deleted.`);
+    } catch (error) {
+      console.error('Error deleting vehicle(s):', error);
+      showToast('Failed to delete one or more vehicles.', 'error');
+      await loadVehicles();
+    }
+  };
+
+	const handleCancelSelection = () => {
 	  setSelectedVehicleIds([]);
-	  setIsExportMode(false);
+	  setIsSelectMode(false);
 	};
 
   const triggerImport = () => {
@@ -254,6 +275,7 @@ const Dashboard: React.FC = () => {
   };
 
   const handleImportVehicle = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    (window as any).api?.refocusWindow();
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -265,7 +287,7 @@ const Dashboard: React.FC = () => {
         ? (parsed as { vehicles: VehicleExportPackageDto[] }).vehicles
         : [parsed as VehicleExportPackageDto];
     } catch {
-      alert('Failed to import JSON. Make sure the file is a valid car export.');
+      showToast('Failed to import JSON. Make sure the file is a valid car export.', 'error');
       event.target.value = '';
       return;
     }
@@ -278,7 +300,7 @@ const Dashboard: React.FC = () => {
         if (error?.response?.status === 409) {
           conflicts.push({ payload, label: getVehicleLabel(payload) });
         } else {
-          alert(`Failed to import "${getVehicleLabel(payload)}": ${error?.response?.data || error?.message || 'Unknown error'}`);
+          showToast(`Failed to import "${getVehicleLabel(payload)}": ${error?.response?.data || error?.message || 'Unknown error'}`, 'error');
         }
       }
     }
@@ -289,7 +311,7 @@ const Dashboard: React.FC = () => {
     if (conflicts.length > 0) {
       setImportConflicts(conflicts);
     } else {
-      alert(`${payloads.length === 1 ? 'Vehicle' : `${payloads.length} vehicles`} imported successfully.`);
+      showToast(`${payloads.length === 1 ? 'Vehicle' : `${payloads.length} vehicles`} imported successfully.`);
     }
   };
 
@@ -299,10 +321,11 @@ const Dashboard: React.FC = () => {
       try {
         await vehicleApi.importVehicle(payload, true);
       } catch (error: any) {
-        alert(`Failed to overwrite "${label}": ${error?.response?.data || error?.message || 'Unknown error'}`);
+        showToast(`Failed to overwrite "${label}": ${error?.response?.data || error?.message || 'Unknown error'}`, 'error');
       }
     }
     await loadVehicles();
+    showToast(`${toOverwrite.length} vehicle${toOverwrite.length > 1 ? 's' : ''} overwritten successfully.`);
   };
 
   if (loading) {
@@ -329,20 +352,32 @@ const Dashboard: React.FC = () => {
 						/>
 						<span>Show sold cars</span>
 					</label>
-					<button className="btn-secondary" onClick={triggerImport}>
-						Import JSON
+					{!isSelectMode && (
+						<button className="btn-secondary" onClick={triggerImport}>
+							Import JSON
+						</button>
+					)}
+					<button className="btn-secondary" onClick={() => { if (!isSelectMode) setIsSelectMode(true); }}>
+						{isSelectMode ? `${selectedVehicleIds.length} selected` : 'Select'}
 					</button>
-					<button className="btn-secondary" onClick={handleExportSelectedVehicles}>
-						{isExportMode ? `Export Selected (${selectedVehicleIds.length})` : 'Export'}
-					</button>
-					{isExportMode && (
+					{isSelectMode && (
 						<button className="btn-secondary" onClick={handleToggleSelectAll}>
 							{allVehiclesSelected ? 'Clear All' : 'Select All'}
 						</button>
 					)}
-					{isExportMode && (
-						<button className="btn-secondary" onClick={handleCancelExportSelection}>
-							Cancel Export
+					{isSelectMode && (
+						<button className="btn-secondary" onClick={handleExportSelected}>
+							Export
+						</button>
+					)}
+					{isSelectMode && (
+						<button className="btn-danger" onClick={handleDeleteSelected}>
+							Delete
+						</button>
+					)}
+					{isSelectMode && (
+						<button className="btn-secondary" onClick={handleCancelSelection}>
+							Cancel
 						</button>
 					)}
 					{supportsCarInfoLookup && (
@@ -373,7 +408,7 @@ const Dashboard: React.FC = () => {
 			  id="dashboard-sort"
 			  className="dashboard-sort-select"
 			  value={sortOption}
-			  onChange={(e) => setSortOption(e.target.value)}
+			  onChange={(e) => { setSortOption(e.target.value); localStorage.setItem('carbudget.sortOption', e.target.value); }}
 			>
 			  <option value="name-asc">Name (A–Z)</option>
 			  <option value="name-desc">Name (Z–A)</option>
@@ -410,16 +445,11 @@ const Dashboard: React.FC = () => {
 	  ) : (
 		<div className="vehicle-grid">
 		  {sortedVehicles.map((vehicle) => (
-			<div key={vehicle.id} className="vehicle-card">
-			  {isExportMode && (
-				<label className="vehicle-export-select">
-				  <input
-					type="checkbox"
-					checked={selectedVehicleIds.includes(vehicle.id)}
-					onChange={() => toggleVehicleSelection(vehicle.id)}
-				  />
-				  <span>Select for export</span>
-				</label>
+			<div key={vehicle.id} className={`vehicle-card${isSelectMode && selectedVehicleIds.includes(vehicle.id) ? ' vehicle-card--selected' : ''}`}>
+			  {isSelectMode && (
+				<div className="vehicle-select-overlay" onClick={() => toggleVehicleSelection(vehicle.id)}>
+				  <div className={`vehicle-select-check${selectedVehicleIds.includes(vehicle.id) ? ' vehicle-select-check--checked' : ''}`}>✓</div>
+				</div>
 			  )}
 			  <div className="vehicle-header">
 				<div className="vehicle-title-wrap">
@@ -537,6 +567,25 @@ const Dashboard: React.FC = () => {
               <button className="btn-danger" onClick={() => handleOverwriteConflicts(importConflicts)}>Overwrite</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {pendingDelete && (
+        <div className="import-conflict-backdrop">
+          <div className="import-conflict-modal">
+            <h3>Delete {pendingDelete.type === 'bulk' ? `${selectedVehicleIds.length} vehicle${selectedVehicleIds.length > 1 ? 's' : ''}` : 'vehicle'}?</h3>
+            <p>This will also remove all associated expenses and cannot be undone.</p>
+            <div className="import-conflict-actions">
+              <button className="btn-secondary" onClick={() => setPendingDelete(null)}>Cancel</button>
+              <button className="btn-danger" onClick={confirmDelete}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`dashboard-toast dashboard-toast--${toast.type}`}>
+          {toast.message}
         </div>
       )}
 	</div>

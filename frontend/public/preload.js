@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
   getElectronSettings: () => ipcRenderer.invoke('get-electron-settings'),
+  refocusWindow: () => ipcRenderer.send('refocus-window'),
   setCloseToTray: (enabled) => ipcRenderer.send('set-close-to-tray', enabled),
   setStartInTray: (enabled) => ipcRenderer.send('set-start-in-tray', enabled),
   onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (_, info) => callback(info)),

@@ -8,9 +8,15 @@ type SetupPageProps = {
   onSaved: () => void;
 };
 
+const WORLDWIDE_CURRENCIES = new Set(['AED','AUD','BRL','CAD','CHF','CNY','DKK','EUR','GBP','INR','JPY','MXN','NOK','NZD','SEK','SGD','USD','ZAR']);
+
 const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
   const [region, setRegion] = useState(setupStatus.currentRegion || 'sweden');
-  const [currency, setCurrency] = useState(setupStatus.currentCurrency || '');
+  const initialCurrency = setupStatus.currentCurrency || '';
+  const initialRegion = setupStatus.currentRegion || 'sweden';
+  const isCustom = initialRegion === 'worldwide' && !WORLDWIDE_CURRENCIES.has(initialCurrency);
+  const [currency, setCurrency] = useState(isCustom ? 'custom' : initialCurrency);
+  const [customCurrencyText, setCustomCurrencyText] = useState(isCustom ? initialCurrency : '');
   const [distanceUnit, setDistanceUnit] = useState(setupStatus.currentDistanceUnit || 'km');
   const [port, setPort] = useState(String(setupStatus.currentPort || 2233));
   const [debugSavePlaywrightHtml, setDebugSavePlaywrightHtml] = useState(setupStatus.debugSavePlaywrightHtml || false);
@@ -54,7 +60,7 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
 
       await appConfigApi.saveConfig({
         region,
-        currency: currency || undefined,
+        currency: currency === 'custom' ? (customCurrencyText.trim().toUpperCase() || undefined) : (currency || undefined),
         distanceUnit: region === 'worldwide' ? distanceUnit : undefined,
         port: validPort,
         debugSavePlaywrightHtml,
@@ -93,7 +99,13 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
         <form onSubmit={handleSubmit} className="setup-form">
           <label>
             Region
-            <select value={region} onChange={(e) => setRegion(e.target.value)}>
+            <select value={region} onChange={(e) => {
+              const newRegion = e.target.value;
+              setRegion(newRegion);
+              if (newRegion === 'worldwide' && !WORLDWIDE_CURRENCIES.has(currency)) {
+                setCurrency('custom');
+              }
+            }}>
               <option value="sweden">Sweden</option>
               <option value="norway">Norway</option>
               <option value="europe">Europe</option>
@@ -109,27 +121,39 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
               <label>
                 Currency
                 <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                  <option value="">USD — US Dollar</option>
-                  <option value="SEK">SEK — Swedish Krona</option>
-                  <option value="NOK">NOK — Norwegian Krone</option>
-                  <option value="EUR">EUR — Euro</option>
-                  <option value="DKK">DKK — Danish Krone</option>
-                  <option value="GBP">GBP — British Pound</option>
-                  <option value="USD">USD — US Dollar</option>
-                  <option value="CHF">CHF — Swiss Franc</option>
-                  <option value="AUD">AUD — Australian Dollar</option>
-                  <option value="CAD">CAD — Canadian Dollar</option>
-                  <option value="JPY">JPY — Japanese Yen</option>
-                  <option value="CNY">CNY — Chinese Yuan</option>
-                  <option value="INR">INR — Indian Rupee</option>
-                  <option value="BRL">BRL — Brazilian Real</option>
-                  <option value="MXN">MXN — Mexican Peso</option>
-                  <option value="ZAR">ZAR — South African Rand</option>
+                  <option value="custom">Custom</option>
                   <option value="AED">AED — UAE Dirham</option>
-                  <option value="SGD">SGD — Singapore Dollar</option>
+                  <option value="AUD">AUD — Australian Dollar</option>
+                  <option value="BRL">BRL — Brazilian Real</option>
+                  <option value="CAD">CAD — Canadian Dollar</option>
+                  <option value="CHF">CHF — Swiss Franc</option>
+                  <option value="CNY">CNY — Chinese Yuan</option>
+                  <option value="DKK">DKK — Danish Krone</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="GBP">GBP — British Pound</option>
+                  <option value="INR">INR — Indian Rupee</option>
+                  <option value="JPY">JPY — Japanese Yen</option>
+                  <option value="MXN">MXN — Mexican Peso</option>
+                  <option value="NOK">NOK — Norwegian Krone</option>
                   <option value="NZD">NZD — New Zealand Dollar</option>
+                  <option value="SEK">SEK — Swedish Krona</option>
+                  <option value="SGD">SGD — Singapore Dollar</option>
+                  <option value="USD">USD — US Dollar</option>
+                  <option value="ZAR">ZAR — South African Rand</option>
                 </select>
               </label>
+              {currency === 'custom' && (
+                <label>
+                  Currency code
+                  <input
+                    type="text"
+                    placeholder="e.g. THB, KRW, TRY"
+                    value={customCurrencyText}
+                    onChange={(e) => setCustomCurrencyText(e.target.value.toUpperCase())}
+                    maxLength={10}
+                  />
+                </label>
+              )}
 
               <label>
                 Distance unit

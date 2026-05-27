@@ -122,29 +122,51 @@
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px var(--shadow);
-  transition: box-shadow 0.3s;
+  transition: box-shadow 0.3s, outline 0.15s;
   display: flex;
   flex-direction: column;
   min-height: 480px;
-}
-
-.vehicle-export-select {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-size: 0.95rem;
-  color: var(--text-secondary);
-  user-select: none;
-}
-
-.vehicle-export-select input {
-  width: 16px;
-  height: 16px;
+  position: relative;
 }
 
 .vehicle-card:hover {
   box-shadow: 0 4px 8px var(--shadow-hover);
+}
+
+.vehicle-card--selected {
+  outline: 2px solid #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 4px 8px var(--shadow-hover);
+}
+
+.vehicle-select-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.vehicle-select-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--text-secondary);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.vehicle-select-check--checked {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
 }
 
 .vehicle-header {
@@ -469,4 +491,27 @@
 
 .btn-danger:hover {
   background: #c0392b;
+}
+
+.dashboard-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 2000;
+  pointer-events: none;
+  animation: toast-in 0.2s ease;
+}
+
+.dashboard-toast--success { background: #27ae60; }
+.dashboard-toast--error   { background: #e74c3c; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
