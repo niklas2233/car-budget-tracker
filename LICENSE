@@ -1,21 +1,92 @@
-﻿GNU GENERAL PUBLIC LICENSE
-Version 3, 29 June 2007
+﻿                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
 
-Copyright (C) 2024 Niklas2233
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+                            Preamble
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
+  The GNU General Public License is a free, copyleft license for
+software and other kinds of works.
 
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <https://www.gnu.org/licenses/>.
+  For the full text of the GNU General Public License, please see:
+  https://www.gnu.org/licenses/gpl-3.0.txt
+
+  The following applies to all source code in this repository:
+
+  Copyright (C) 2024 Niklas2233
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+--------------------------------------------------------------------------------
+
+                    TERMS AND CONDITIONS
+
+  0. Definitions.
+
+  "This License" refers to version 3 of the GNU General Public License.
+
+  "The Program" refers to any copyrightable work licensed under this License.
+
+  "You" refers to the licensee.
+
+  To "modify" a work means to copy from or adapt all or part of the work
+in a fashion requiring copyright permission, other than the making of an
+exact copy. The resulting work is called a "modified version" of the
+earlier work or a work "based on" the earlier work.
+
+  A "covered work" means either the unmodified Program or a work based
+on the Program.
+
+  1. Source Code.
+
+  The "source code" for a work means the preferred form of the work
+for making modifications to it. "Object code" means any non-source
+form of a work.
+
+  2. Basic Permissions.
+
+  All rights granted under this License are granted for the term of
+copyright on the Program, and are irrevocable provided the stated
+conditions are met. This License explicitly affirms your unlimited
+permission to run the unmodified Program.
+
+  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
+
+  No covered work shall be deemed part of an effective technological
+measure under any applicable law fulfilling obligations under article
+11 of the WIPO copyright treaty adopted on 20 December 1996.
+
+  4. Conveying Verbatim Copies.
+
+  You may convey verbatim copies of the Program's source code as you
+receive it, provided that you include a copy of this License with
+every copy.
+
+  5. Conveying Modified Source Versions.
+
+  You may convey a work based on the Program, provided you meet all
+conditions of section 4 and additional conditions as set out in
+section 7.
+
+  6. Conveying Non-Source Forms.
+
+  You may convey a covered work in object code form provided you also
+convey the machine-readable source code under the terms of this License.
+
+  For full terms and conditions, see:
+  https://www.gnu.org/licenses/gpl-3.0.txt
 
 SPDX-License-Identifier: GPL-3.0-or-later
-
-Full license text: https://www.gnu.org/licenses/gpl-3.0.txt

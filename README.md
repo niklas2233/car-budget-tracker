@@ -1,28 +1,42 @@
 # 🚗 Car Budget Tracker
 
-A car budget tracking application built with .NET and React. Built by Claude and Copilot.
+A car budget tracking application built with .NET and React. Available as a Windows desktop app and a self-hosted Docker container.
+
+> **Latest release: v0.2.0** — [Download for Windows](https://github.com/niklas2233/car-budget-tracker/releases/latest) · [Docker Hub](https://hub.docker.com/r/niklas2233/car-budget-tracker)
 
 ## Features
 
-- **Vehicle Management**: Add, view, edit, and delete vehicles
-- **Expense Tracking**: Track all car-related expenses (fuel, maintenance, repairs, insurance, etc.)
-- **Dashboard**: View all vehicles with total costs and expense summaries
-- **Detailed Reports**: See complete expense history for each vehicle
-- **Modern UI**: Clean, responsive React interface
+- **Vehicle Management**: Add, view, edit, and delete vehicles with photo attachments and colour tags
+- **Expense Tracking**: Log all car-related expenses (fuel, maintenance, repairs, insurance, etc.) with receipt photos
+- **Profit / Loss**: Automatically calculates profit or loss per vehicle based on purchase price, expenses, and sale price
+- **Economy Dashboard**: Fleet-wide totals, filtering by date range, and per-vehicle breakdown table
+- **Plate Lookup**: Fetch vehicle details automatically by licence plate (Sweden/Norway)
+- **JSON Import / Export**: Back up and restore individual vehicles or your entire fleet
+- **Dashboard Search & Sort**: Filter vehicles by name and sort by various criteria
+- **Select Mode**: Multi-select vehicles for bulk export or bulk delete
+- **Dark Mode**: Full light/dark theme with system-aware styling
+- **Mobile Responsive**: Works on phones and tablets — accessible from any device on your local network
+- **Sold Vehicles**: Mark vehicles as sold and toggle their visibility on the dashboard
 
 ## Technology Stack
 
 ### Backend
-- **.NET 10.0** - Web API
-- **Entity Framework Core** - ORM
-- **SQLite** - Database (no separate database server needed)
-- **Clean Architecture** - Separation of concerns (Core, Infrastructure, API)
+- **.NET 10.0** — Web API
+- **Entity Framework Core** — ORM
+- **SQLite** — Database (no separate database server needed)
+- **Clean Architecture** — Core / Infrastructure / API layers
+- **Playwright** — Headless browser for plate lookups
 
 ### Frontend
-- **React 18** with TypeScript
-- **React Router** - Client-side routing
-- **Axios** - HTTP client
-- **CSS3** - Styling
+- **React 19** with TypeScript
+- **Vite** — Build tool
+- **React Router** — Client-side routing
+- **Axios** — HTTP client
+- **CSS3** — Styling with CSS custom properties for theming
+
+### Desktop (Windows)
+- **Electron** — Wraps the app as a native Windows executable
+- **electron-builder** — Packages into installer and portable `.exe`
 
 ## Project Structure
 
@@ -38,10 +52,26 @@ CarBudget/
 
 ## Getting Started
 
-### Prerequisites
+### Windows Desktop App (Easiest)
 
-- **.NET SDK 10.0+** - [Download](https://dotnet.microsoft.com/download)
-- **Node.js 18+** - [Download](https://nodejs.org/)
+Download the latest release from the [Releases page](https://github.com/niklas2233/car-budget-tracker/releases/latest):
+
+| File | Description |
+|---|---|
+| `CarBudget Setup x.x.x.exe` | Installer — installs to your user profile |
+| `CarBudget x.x.x.exe` | Portable — run from anywhere, data stored next to the exe |
+
+No prerequisites needed — the backend and all dependencies are bundled inside.
+
+You can also install via **winget**:
+```
+winget install Niklas2233.CarBudget
+```
+
+### Prerequisites (Docker / Local)
+
+- **.NET SDK 10.0+** — [Download](https://dotnet.microsoft.com/download)
+- **Node.js 18+** — [Download](https://nodejs.org/)
 
 ### Running with Docker (Recommended)
 
@@ -204,15 +234,13 @@ npm run build
 
 - [ ] User authentication and multi-user support
 - [ ] Expense categories and budgets
-- [ ] Charts and analytics
-- [ ] Export to CSV/PDF
+- [ ] Export to CSV / PDF
 - [ ] Fuel economy tracking
 - [ ] Maintenance reminders
-- [ ] Mobile app
 
 ## License
 
-This project is open source and available for personal use.
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
 
 ## Support
 
