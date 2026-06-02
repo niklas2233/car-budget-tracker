@@ -352,42 +352,49 @@ const Dashboard: React.FC = () => {
 						/>
 						<span>Show sold cars</span>
 					</label>
-					{!isSelectMode && (
-						<button className="btn-secondary" onClick={triggerImport}>
+					{!isSelectMode && (<>
+						<button type="button" className="btn-secondary" onClick={triggerImport}>
 							Import JSON
 						</button>
-					)}
-					<button className="btn-secondary" onClick={() => { if (!isSelectMode) setIsSelectMode(true); }}>
-						{isSelectMode ? `${selectedVehicleIds.length} selected` : 'Select'}
-					</button>
-					{isSelectMode && (
-						<button className="btn-secondary" onClick={handleToggleSelectAll}>
-							{allVehiclesSelected ? 'Clear All' : 'Select All'}
+						<button type="button" className="btn-secondary" onClick={() => setIsSelectMode(true)}>
+							Select
 						</button>
-					)}
-					{isSelectMode && (
-						<button className="btn-secondary" onClick={handleExportSelected}>
-							Export
+						{supportsCarInfoLookup && (
+							<button type="button" className="btn-secondary" onClick={() => navigate('/cached-plates')}>
+								Cached Plates
+							</button>
+						)}
+						<button type="button" className="btn-primary" onClick={() => navigate('/vehicles/new')}>
+							Add New Vehicle
 						</button>
-					)}
-					{isSelectMode && (
-						<button className="btn-danger" onClick={handleDeleteSelected}>
-							Delete
-						</button>
-					)}
-					{isSelectMode && (
-						<button className="btn-secondary" onClick={handleCancelSelection}>
-							Cancel
-						</button>
-					)}
-					{supportsCarInfoLookup && (
-						<button className="btn-secondary" onClick={() => navigate('/cached-plates')}>
-							Cached Plates
-						</button>
-					)}
-					<button className="btn-primary" onClick={() => navigate('/vehicles/new')}>
-						Add New Vehicle
-					</button>
+					</>)}
+					{isSelectMode && (<>
+						{supportsCarInfoLookup && (
+							<button type="button" className="btn-secondary" onClick={() => navigate('/cached-plates')}>
+								Cached Plates
+							</button>
+						)}
+						<div className="select-mode-actions">
+							<button type="button" className="btn-secondary btn-select-counter">
+								{selectedVehicleIds.length} selected
+							</button>
+							<button type="button" className="btn-secondary btn-select-selectall" onClick={handleToggleSelectAll}>
+								{allVehiclesSelected ? 'Clear All' : 'Select All'}
+							</button>
+							<button type="button" className="btn-secondary btn-select-cancel" onClick={handleCancelSelection}>
+								Cancel
+							</button>
+							<button type="button" className="btn-secondary btn-select-export" onClick={handleExportSelected}>
+								Export
+							</button>
+							<button type="button" className="btn-danger btn-select-delete" onClick={handleDeleteSelected}>
+								Delete
+							</button>
+							<button type="button" className="btn-primary btn-select-add" onClick={() => navigate('/vehicles/new')}>
+								Add New Vehicle
+							</button>
+						</div>
+					</>)}
 				</div>
 	  </div>
 

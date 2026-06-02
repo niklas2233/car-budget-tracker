@@ -312,3 +312,39 @@
     align-items: stretch;
   }
 }
+
+@media (max-width: 600px) {
+  .form-container {
+    margin: 16px auto;
+    padding: 12px;
+  }
+
+  .form-container h1 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  .vehicle-form,
+  .expense-form {
+    padding: 16px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .form-actions .btn-primary,
+  .form-actions .btn-secondary,
+  .form-actions .btn-danger {
+    width: 100%;
+    text-align: center;
+    padding: 12px 20px;
+    font-size: 1rem;
+  }
+}

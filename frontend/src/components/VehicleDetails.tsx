@@ -143,6 +143,7 @@ const VehicleDetails: React.FC = () => {
 		<button className="btn-back" onClick={() => navigate('/')}>
 		  ← Back to Dashboard
 		</button>
+		<div className="details-header-row">
 		<h1>{vehicle.year} {vehicle.make} {vehicle.model}</h1>
 		<div className="vehicle-actions">
 		  <button className="btn-secondary" onClick={() => navigate(`/vehicles/${vehicle.licensePlate ? encodeURIComponent(vehicle.licensePlate) : vehicle.id}/edit`)}>
@@ -160,6 +161,7 @@ const VehicleDetails: React.FC = () => {
 		  <button className="btn-primary" onClick={() => navigate(`/vehicles/${vehicle.licensePlate ? encodeURIComponent(vehicle.licensePlate) : vehicle.id}/expenses/new`)}>
 			Add Expense
 		  </button>
+		</div>
 		</div>
 	  </div>
 

@@ -4,6 +4,8 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const dgram = require('dgram');
 const isDev = !app.isPackaged;
 
 app.setName('CarBudget');
@@ -486,6 +488,29 @@ ipcMain.on('open-external', (event, url) => {
 ipcMain.handle('get-electron-settings', () => ({
   closeToTray,
   startInTray,
+}));
+
+// Finds the IP of the interface that holds the default gateway by connecting
+// a UDP socket to an external address. The OS picks the correct interface
+// automatically — no packets are sent and no admin rights are required.
+function getLocalNetworkIp() {
+  return new Promise((resolve) => {
+    const socket = dgram.createSocket('udp4');
+    socket.connect(80, '8.8.8.8', () => {
+      const ip = socket.address().address;
+      socket.close();
+      resolve(ip);
+    });
+    socket.on('error', () => {
+      socket.close();
+      resolve('127.0.0.1');
+    });
+  });
+}
+
+ipcMain.handle('get-local-address', async () => ({
+  ip: await getLocalNetworkIp(),
+  port: backendPort,
 }));
 
 ipcMain.on('refocus-window', () => {

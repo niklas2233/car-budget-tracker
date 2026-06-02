@@ -118,3 +118,56 @@
   color: #0b7f41;
   margin-top: 0.8rem;
 }
+
+.setup-local-address {
+  margin-top: 0.9rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: var(--bg-stat);
+  border: 1px solid var(--border-color);
+}
+
+.setup-local-address-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.setup-local-address-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.setup-local-address-url {
+  flex: 1;
+  font-family: monospace;
+  font-size: 1rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  word-break: break-all;
+}
+
+.setup-copy-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.setup-copy-btn:hover {
+  background: var(--bg-stat);
+}

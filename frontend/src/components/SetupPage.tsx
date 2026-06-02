@@ -25,6 +25,8 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [restartRequired, setRestartRequired] = useState(false);
+  const [localAddress, setLocalAddress] = useState<{ ip: string; port: number } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const isElectron = !!(window as any).api?.setCloseToTray;
 
@@ -35,7 +37,19 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
         setStartInTray(!!s.startInTray);
       });
     }
+    if ((window as any).api?.getLocalAddress) {
+      (window as any).api.getLocalAddress().then((addr: { ip: string; port: number }) => {
+        setLocalAddress(addr);
+      });
+    }
   }, []);
+
+  const handleCopyLink = () => {
+    if (!localAddress) return;
+    navigator.clipboard.writeText(`http://${localAddress.ip}:${localAddress.port}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleCloseToTrayChange = (checked: boolean) => {
     setCloseToTray(checked);
@@ -195,6 +209,22 @@ const SetupPage: React.FC<SetupPageProps> = ({ setupStatus, onSaved }) => {
               <p className="setup-hint">
                 Port the backend listens on. Default is 2233. Requires a restart to take effect.
               </p>
+              {localAddress && (
+                <div className="setup-local-address">
+                  <span className="setup-local-address-label">Access from phone</span>
+                  <div className="setup-local-address-row">
+                    <code className="setup-local-address-url">
+                      http://{localAddress.ip}:{localAddress.port}
+                    </code>
+                    <button type="button" className="setup-copy-btn" onClick={handleCopyLink}>
+                      {copied ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </div>
+                  <p className="setup-hint">
+                    Open this link on any device connected to the same Wi-Fi network.
+                  </p>
+                </div>
+              )}
             </fieldset>
           )}
 

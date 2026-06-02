@@ -155,3 +155,43 @@
   padding: 24px;
   color: var(--text-secondary);
 }
+
+/* === Mobile responsive === */
+@media (max-width: 600px) {
+  .economy-dashboard {
+    padding: 12px;
+  }
+
+  .economy-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .economy-kpis {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .economy-filters {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .economy-filters label {
+    width: 100%;
+  }
+
+  .economy-filters .datepicker-input {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .economy-breakdown {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .economy-kpis {
+    grid-template-columns: 1fr;
+  }
+}

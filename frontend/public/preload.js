@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
   getElectronSettings: () => ipcRenderer.invoke('get-electron-settings'),
+  getLocalAddress: () => ipcRenderer.invoke('get-local-address'),
   refocusWindow: () => ipcRenderer.send('refocus-window'),
   setCloseToTray: (enabled) => ipcRenderer.send('set-close-to-tray', enabled),
   setStartInTray: (enabled) => ipcRenderer.send('set-start-in-tray', enabled),

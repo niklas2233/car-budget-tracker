@@ -6,9 +6,31 @@
 
 .details-header {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.details-header-row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  gap: 16px;
+}
+
+/* Override the dashboard-card grid for the detail page header */
+.details-header-row .vehicle-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.details-header-row .vehicle-actions .btn-secondary,
+.details-header-row .vehicle-actions .btn-primary {
+  min-height: 44px;
+  padding: 10px 20px;
+  width: auto;
 }
 
 .details-header h1 {
@@ -260,4 +282,72 @@
 
 .empty-expenses p {
   margin-bottom: 20px;
+}
+
+/* === Mobile responsive === */
+@media (max-width: 768px) {
+  .details-header {
+    margin-bottom: 20px;
+  }
+
+  .details-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .vehicle-info-card,
+  .expenses-section {
+    padding: 20px;
+  }
+
+  .info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .expenses-table th,
+  .expenses-table td {
+    padding: 8px 6px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .vehicle-details {
+    padding: 12px;
+  }
+
+  .vehicle-info-card,
+  .expenses-section {
+    padding: 14px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .details-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .details-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .details-header-row .vehicle-actions {
+    flex-wrap: wrap;
+  }
+
+  .btn-back {
+    padding: 8px 14px;
+    font-size: 0.9em;
+  }
+
+  .expense-action-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    flex: 0 0 36px;
+  }
 }

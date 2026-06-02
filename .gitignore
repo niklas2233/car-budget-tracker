@@ -38,6 +38,9 @@ yarn-error.log
 # Graphify
 graphify-out/
 
+# Local memory / notes
+MEMORY.md
+
 # Temp files
 *.tmp
 *.temp

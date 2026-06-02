@@ -183,6 +183,9 @@ body {
 
 main {
   padding: 20px;
+  max-width: 1440px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 @media (max-width: 920px) {
@@ -200,6 +203,34 @@ main {
 
   .dark-mode-toggle {
     align-self: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .App-header {
+    padding: 14px 16px;
+  }
+
+  .App-header h1 {
+    font-size: 1.5em;
+  }
+
+  .App-header p {
+    font-size: 0.85em;
+  }
+
+  .App-nav {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .App-nav-link {
+    font-size: 0.82rem;
+    padding: 6px 10px;
+  }
+
+  main {
+    padding: 12px;
   }
 }
 

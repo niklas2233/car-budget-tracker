@@ -13,6 +13,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .dashboard-header-actions {
@@ -37,6 +39,19 @@
 .sold-toggle input {
   width: 16px;
   height: 16px;
+}
+
+/* On desktop the wrapper is invisible — its buttons flow directly into the
+   parent flex container as if the div weren't there. */
+.select-mode-actions {
+  display: contents;
+}
+
+/* Counter is informational only — not interactive at any viewport width. */
+.btn-select-counter {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.65;
 }
 
 .dashboard-header h1 {
@@ -514,4 +529,117 @@
 @keyframes toast-in {
   from { opacity: 0; transform: translateX(-50%) translateY(8px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* === Mobile responsive === */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 12px;
+  }
+
+  .vehicle-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .dashboard-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .dashboard-search-wrap {
+    min-width: unset;
+  }
+
+  .dashboard-sort-wrap {
+    width: 100%;
+  }
+
+  .dashboard-sort-select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .vehicle-card {
+    min-height: auto;
+  }
+
+  .vehicle-stats {
+    min-height: auto;
+  }
+
+  .vehicle-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .dashboard-header-actions {
+    width: 100%;
+  }
+
+  /* Non-select-mode: direct child buttons grow evenly across the row */
+  .dashboard-header-actions > .btn-primary,
+  .dashboard-header-actions > .btn-secondary,
+  .dashboard-header-actions > .btn-danger {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .sold-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Select-mode strip: becomes its own full-width flex container,
+     producing exactly two rows of three buttons each. */
+  .select-mode-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .select-mode-actions > button {
+    flex: 1 1 calc(33.333% - 6px);
+    min-width: 0;
+    font-size: 0.78rem;
+    padding: 8px 4px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Row 1: counter | Select All | Cancel */
+  .btn-select-counter   { order: 1; }
+  .btn-select-selectall { order: 2; }
+  .btn-select-cancel    { order: 3; }
+  /* Row 2: Export | Delete | Add New Vehicle */
+  .btn-select-export    { order: 4; }
+  .btn-select-delete    { order: 5; }
+  .btn-select-add       { order: 6; }
+
+  .stat-value {
+    font-size: 1.3rem;
+  }
+
+  .stat-label {
+    font-size: 0.95rem;
+  }
+
+  .vehicle-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .vehicle-actions .btn-secondary,
+  .vehicle-actions .btn-danger {
+    min-height: 48px;
+  }
 }
