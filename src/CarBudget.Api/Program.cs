@@ -5,6 +5,11 @@ using CarBudget.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
+// Point Playwright at the bundled Chromium when running as a self-contained app
+var bundledBrowsersPath = Path.Combine(AppContext.BaseDirectory, "playwright-browsers");
+if (Directory.Exists(bundledBrowsersPath))
+    Environment.SetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH", bundledBrowsersPath);
+
 var builder = WebApplication.CreateBuilder(args);
 
 var runningInContainer = string.Equals(

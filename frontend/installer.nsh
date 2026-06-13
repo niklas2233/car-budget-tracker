@@ -1,9 +1,45 @@
-; Custom NSIS include for CarBudget installer
+﻿; Custom NSIS include for CarBudget installer
 
-; Override default per-user install path to LocalAppData\CarBudget
-; (electron-builder defaults to LocalAppData\Programs\CarBudget)
-; Only sets it when no previous installation path exists in the registry.
+; ─────────────────────────────────────────────────────────────────
+; customInstallMode — called inside the "me vs all users" page's own
+; pre-function.  Setting $isForceCurrentInstall / $isForceMachineInstall
+; to "1" causes that pre-function to call Abort, skipping the page.
+; On upgrades we preserve whichever mode was used previously.
+; ─────────────────────────────────────────────────────────────────
+!macro customInstallMode
+  ReadRegDWORD $0 HKCU "Software\CarBudget_Upgrade" "IsUpgrade"
+  StrCmp $0 "1" 0 CB_InstMode_done
+    StrCmp $hasPerMachineInstallation "1" 0 CB_ForceUser
+      StrCpy $isForceMachineInstall "1"
+      Goto CB_InstMode_done
+    CB_ForceUser:
+      StrCpy $isForceCurrentInstall "1"
+  CB_InstMode_done:
+!macroend
+
+; ─────────────────────────────────────────────────────────────────
+; preInit — runs inside .onInit before any pages are shown.
+; ─────────────────────────────────────────────────────────────────
 !macro preInit
+  ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${If} $0 != ""
+    WriteRegDWORD HKCU "Software\CarBudget_Upgrade" "IsUpgrade" 1
+
+    ${If} ${FileExists} "$DESKTOP\CarBudget.lnk"
+      WriteRegDWORD HKCU "Software\CarBudget_Upgrade" "RestoreDesktop" 1
+    ${Else}
+      WriteRegDWORD HKCU "Software\CarBudget_Upgrade" "RestoreDesktop" 0
+    ${EndIf}
+
+    ${If} ${FileExists} "$SMPROGRAMS\CarBudget\CarBudget.lnk"
+      WriteRegDWORD HKCU "Software\CarBudget_Upgrade" "RestoreStartMenu" 1
+    ${Else}
+      WriteRegDWORD HKCU "Software\CarBudget_Upgrade" "RestoreStartMenu" 0
+    ${EndIf}
+  ${Else}
+    DeleteRegKey HKCU "Software\CarBudget_Upgrade"
+  ${EndIf}
+
   SetRegView 64
   ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
   ${If} $0 == ""
@@ -26,6 +62,11 @@ Var DesktopShortcutState
 Var StartMenuShortcutState
 
 Function ShortcutOptionsCreate
+  ReadRegDWORD $0 HKCU "Software\CarBudget_Upgrade" "IsUpgrade"
+  ${If} $0 == 1
+    Abort
+  ${EndIf}
+
   nsDialogs::Create 1018
   Pop $0
 
@@ -53,14 +94,29 @@ FunctionEnd
 !macroend
 
 !macro customInstall
-  ${If} $DesktopShortcutState == ${BST_CHECKED}
-    CreateShortcut "$DESKTOP\CarBudget.lnk" "$INSTDIR\CarBudget.exe" "" "$INSTDIR\resources\favicon.ico" 0
+  ReadRegDWORD $0 HKCU "Software\CarBudget_Upgrade" "IsUpgrade"
+
+  ${If} $0 == 1
+    ReadRegDWORD $0 HKCU "Software\CarBudget_Upgrade" "RestoreDesktop"
+    ${If} $0 == 1
+      CreateShortcut "$DESKTOP\CarBudget.lnk" "$INSTDIR\CarBudget.exe" "" "$INSTDIR\resources\favicon.ico" 0
+    ${EndIf}
+    ReadRegDWORD $0 HKCU "Software\CarBudget_Upgrade" "RestoreStartMenu"
+    ${If} $0 == 1
+      CreateDirectory "$SMPROGRAMS\CarBudget"
+      CreateShortcut "$SMPROGRAMS\CarBudget\CarBudget.lnk" "$INSTDIR\CarBudget.exe" "" "$INSTDIR\resources\favicon.ico" 0
+    ${EndIf}
+  ${Else}
+    ${If} $DesktopShortcutState == 1
+      CreateShortcut "$DESKTOP\CarBudget.lnk" "$INSTDIR\CarBudget.exe" "" "$INSTDIR\resources\favicon.ico" 0
+    ${EndIf}
+    ${If} $StartMenuShortcutState == 1
+      CreateDirectory "$SMPROGRAMS\CarBudget"
+      CreateShortcut "$SMPROGRAMS\CarBudget\CarBudget.lnk" "$INSTDIR\CarBudget.exe" "" "$INSTDIR\resources\favicon.ico" 0
+    ${EndIf}
   ${EndIf}
 
-  ${If} $StartMenuShortcutState == ${BST_CHECKED}
-    CreateDirectory "$SMPROGRAMS\CarBudget"
-    CreateShortcut "$SMPROGRAMS\CarBudget\CarBudget.lnk" "$INSTDIR\CarBudget.exe" "" "$INSTDIR\resources\favicon.ico" 0
-  ${EndIf}
+  DeleteRegKey HKCU "Software\CarBudget_Upgrade"
 !macroend
 
 !endif ; BUILD_UNINSTALLER
@@ -68,5 +124,6 @@ FunctionEnd
 !macro customUnInstall
   Delete "$DESKTOP\CarBudget.lnk"
   Delete "$SMPROGRAMS\CarBudget\CarBudget.lnk"
-  RMDir "$SMPROGRAMS\CarBudget"
+  RMDir  "$SMPROGRAMS\CarBudget"
+  ; CarBudget_Upgrade intentionally NOT deleted here.
 !macroend

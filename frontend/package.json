@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
@@ -26,13 +26,14 @@
     "start": "vite",
     "build": "tsc --noEmit && vite build",
     "build-backend": "(if exist backend rmdir /s /q backend) && dotnet publish ..\\src\\CarBudget.Api\\CarBudget.Api.csproj -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o backend",
+    "install-playwright-browsers": "SET PLAYWRIGHT_BROWSERS_PATH=%CD%\\backend\\playwright-browsers&& dotnet exec --runtimeconfig backend\\CarBudget.Api.runtimeconfig.json backend\\Microsoft.Playwright.dll install chromium",
     "copy-to-api": "(if exist ..\\src\\CarBudget.Api\\wwwroot rmdir /s /q ..\\src\\CarBudget.Api\\wwwroot) && xcopy build\\* ..\\src\\CarBudget.Api\\wwwroot\\ /E /Y /I",
     "test": "vitest run",
     "electron-start": "electron .",
     "electron-tray": "electron . --tray",
     "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:2233 && electron .\"",
-    "electron-build": "npm run build && npm run copy-to-api && npm run build-backend && electron-builder",
-    "electron-build-win": "npm run build && npm run copy-to-api && npm run build-backend && electron-builder --win"
+    "electron-build": "npm run build && npm run copy-to-api && npm run build-backend && npm run install-playwright-browsers && electron-builder",
+    "electron-build-win": "npm run build && npm run copy-to-api && npm run build-backend && npm run install-playwright-browsers && electron-builder --win"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.2",

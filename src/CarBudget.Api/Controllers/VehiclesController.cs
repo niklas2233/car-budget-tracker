@@ -1073,7 +1073,7 @@ public class VehiclesController : ControllerBase
 
             _playwright ??= await Playwright.CreateAsync();
 
-            var browserPath = GetEdgeExecutablePath();
+            var browserPath = GetSystemBrowserExecutablePath();
             var launchOptions = new BrowserTypeLaunchOptions
             {
                 Headless = true,
@@ -1217,13 +1217,19 @@ public class VehiclesController : ControllerBase
         }
     }
 
-    private static string? GetEdgeExecutablePath()
+    private static string? GetSystemBrowserExecutablePath()
     {
-        // Windows paths for Edge
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+        // Windows: Edge and Chrome candidates
         var windowsCandidates = new[]
         {
             @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-            @"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+            @"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+            @"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            Path.Combine(localAppData, @"Microsoft\Edge\Application\msedge.exe"),
+            Path.Combine(localAppData, @"Google\Chrome\Application\chrome.exe"),
         };
 
         foreach (var candidate in windowsCandidates)
@@ -1236,20 +1242,20 @@ public class VehiclesController : ControllerBase
         var linuxCandidates = new[]
         {
             "/usr/bin/chromium",
-            "/usr/bin/chromium-browser"
+            "/usr/bin/chromium-browser",
+            "/usr/bin/google-chrome",
+            "/usr/bin/google-chrome-stable",
         };
 
         foreach (var candidate in linuxCandidates)
         {
             if (System.IO.File.Exists(candidate))
-            {
                 return candidate;
-            }
         }
 
-        // Return null to let Playwright use its own bundled Chromium (installed via PLAYWRIGHT_BROWSERS_PATH)
         return null;
     }
+
 
     private static string CleanHtmlText(string value)
     {
