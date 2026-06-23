@@ -150,11 +150,16 @@ function startBackendIfNeeded() {
   resolvedDataDir = dataDir;
   fs.mkdirSync(dataDir, { recursive: true });
 
+  const playwrightBrowsersPath = isDev
+    ? null
+    : path.join(process.resourcesPath, 'backend', 'playwright-browsers');
+
   const backendEnv = {
     ...process.env,
     webui_port: String(backendPort),
     ASPNETCORE_ENVIRONMENT: 'Production',
     CARBUDGET_DATA_DIR: dataDir,
+    ...(playwrightBrowsersPath && { PLAYWRIGHT_BROWSERS_PATH: playwrightBrowsersPath }),
   };
 
   log('Spawning backend process');

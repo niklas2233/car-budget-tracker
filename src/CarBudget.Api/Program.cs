@@ -1,4 +1,4 @@
-using CarBudget.Api.Controllers;
+﻿using CarBudget.Api.Controllers;
 using CarBudget.Core.Interfaces;
 using CarBudget.Infrastructure.Data;
 using CarBudget.Infrastructure.Repositories;
@@ -86,6 +86,7 @@ builder.Services.AddDbContext<CarBudgetDbContext>(options =>
 
 builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
+builder.Services.AddSingleton<CarBudget.Api.Services.PlateScraperService>();
 
 builder.Services.AddCors(options =>
 {
@@ -112,8 +113,8 @@ string? activeCurrency = currencyEnv ?? fileConfig?.Currency?.Trim().ToUpperInva
 string? activeDistanceUnit = NormalizeDistanceUnit(distanceUnitEnv) ?? NormalizeDistanceUnit(fileConfig?.DistanceUnit);
 
 VehiclesController.Region = effectiveRegion;
-VehiclesController.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
-VehiclesController.DebugSaveHtml = debugFromEnv || (fileConfig?.Debug?.SavePlaywrightHtml ?? false);
+CarBudget.Api.Services.PlateScraperService.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
+CarBudget.Api.Services.PlateScraperService.DebugSaveHtml = debugFromEnv || (fileConfig?.Debug?.SavePlaywrightHtml ?? false);
 
 static string NormalizeRegion(string? value)
 {
@@ -156,7 +157,7 @@ AppLog($"Region:        {effectiveRegion}");
 AppLog($"ConfigExists:  {File.Exists(configFilePath)}");
 AppLog($"SetupRequired: {setupRequiredCheck()}");
 AppLog($"Container:     {runningInContainer}");
-AppLog($"DebugSaveHtml: {VehiclesController.DebugSaveHtml}");
+AppLog($"DebugSaveHtml: {CarBudget.Api.Services.PlateScraperService.DebugSaveHtml}");
 AppLog($"Currency:      {activeCurrency ?? "(derived from region)"}");
 AppLog($"DistanceUnit:  {activeDistanceUnit ?? "(derived from region)"}");
 
@@ -171,7 +172,7 @@ try
 }
 catch (Exception ex)
 {
-    AppLog($"InitializeDatabase: FAILED — {ex}");
+    AppLog($"InitializeDatabase: FAILED â€” {ex}");
     throw;
 }
 
@@ -225,7 +226,7 @@ app.MapGet("/api/setup-status", () =>
         CurrentCurrency = activeCurrency,
         CurrentDistanceUnit = activeDistanceUnit,
         CurrentPort = currentPort,
-        DebugSavePlaywrightHtml = VehiclesController.DebugSaveHtml,
+        DebugSavePlaywrightHtml = CarBudget.Api.Services.PlateScraperService.DebugSaveHtml,
         IsContainer = runningInContainer,
     });
 });
@@ -237,7 +238,7 @@ app.MapGet("/api/app-config", () =>
         Region = VehiclesController.Region,
         DataDirectoryPath = dataDirectoryPath,
         ConfigFilePath = configFilePath,
-        DebugSavePlaywrightHtml = VehiclesController.DebugSaveHtml,
+        DebugSavePlaywrightHtml = CarBudget.Api.Services.PlateScraperService.DebugSaveHtml,
     });
 });
 
@@ -269,12 +270,12 @@ app.MapPost("/api/app-config", (SaveAppConfigurationDto request) =>
     }));
 
     VehiclesController.Region = normalizedRegion;
-    VehiclesController.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
-    VehiclesController.DebugSaveHtml = request.DebugSavePlaywrightHtml;
+    CarBudget.Api.Services.PlateScraperService.LogFilePath = Path.Combine(dataDirectoryPath, "lookup.log");
+    CarBudget.Api.Services.PlateScraperService.DebugSaveHtml = request.DebugSavePlaywrightHtml;
     activeCurrency = normalizedCurrency;
     activeDistanceUnit = normalizedDistanceUnit;
 
-    AppLog($"Config saved — Region: {normalizedRegion}  Currency: {normalizedCurrency ?? "(region default)"}  DistanceUnit: {normalizedDistanceUnit ?? "(region default)"}  DebugSaveHtml: {request.DebugSavePlaywrightHtml}");
+    AppLog($"Config saved â€” Region: {normalizedRegion}  Currency: {normalizedCurrency ?? "(region default)"}  DistanceUnit: {normalizedDistanceUnit ?? "(region default)"}  DebugSaveHtml: {request.DebugSavePlaywrightHtml}");
 
     return Results.Ok(new SaveAppConfigurationResultDto
     {
@@ -330,7 +331,6 @@ static void InitializeDatabase(CarBudgetDbContext db)
                 "CargoVolume" TEXT NULL,
                 "SeatCount" TEXT NULL,
                 "SpecificationsJson" TEXT NULL,
-                "RawHtml" TEXT NULL,
                 "SourceUrl" TEXT NOT NULL,
                 "FetchedAt" TEXT NOT NULL,
                 "CreatedAt" TEXT NOT NULL,
@@ -359,8 +359,7 @@ static void InitializeDatabase(CarBudgetDbContext db)
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN \"Co2Mixed\" TEXT NULL;",
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN \"CargoVolume\" TEXT NULL;",
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN \"SeatCount\" TEXT NULL;",
-            "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN \"SpecificationsJson\" TEXT NULL;",
-            "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN \"RawHtml\" TEXT NULL;"
+            "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN \"SpecificationsJson\" TEXT NULL;"
         })
         {
             try { db.Database.ExecuteSqlRaw(statement); } catch { }
@@ -394,7 +393,6 @@ static void InitializeDatabase(CarBudgetDbContext db)
                 "CargoVolume" character varying(50) NULL,
                 "SeatCount" character varying(20) NULL,
                 "SpecificationsJson" text NULL,
-                "RawHtml" text NULL,
                 "SourceUrl" character varying(500) NOT NULL,
                 "FetchedAt" timestamp with time zone NOT NULL,
                 "CreatedAt" timestamp with time zone NOT NULL,
@@ -423,8 +421,7 @@ static void InitializeDatabase(CarBudgetDbContext db)
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN IF NOT EXISTS \"Co2Mixed\" character varying(50) NULL;",
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN IF NOT EXISTS \"CargoVolume\" character varying(50) NULL;",
             "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN IF NOT EXISTS \"SeatCount\" character varying(20) NULL;",
-            "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN IF NOT EXISTS \"SpecificationsJson\" text NULL;",
-            "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN IF NOT EXISTS \"RawHtml\" text NULL;"
+            "ALTER TABLE \"VehicleLookupCache\" ADD COLUMN IF NOT EXISTS \"SpecificationsJson\" text NULL;"
         })
         {
             db.Database.ExecuteSqlRaw(statement);

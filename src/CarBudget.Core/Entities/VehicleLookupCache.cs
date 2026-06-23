@@ -25,7 +25,6 @@ public class VehicleLookupCache
     public string? CargoVolume { get; set; }
     public string? SeatCount { get; set; }
     public string? SpecificationsJson { get; set; }
-    public string? RawHtml { get; set; }
     public string SourceUrl { get; set; } = string.Empty;
     public DateTime FetchedAt { get; set; } = DateTime.UtcNow;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

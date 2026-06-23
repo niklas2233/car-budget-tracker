@@ -93,7 +93,6 @@ public class CarBudgetDbContext : DbContext
             entity.Property(e => e.CargoVolume).HasMaxLength(50);
             entity.Property(e => e.SeatCount).HasMaxLength(20);
             entity.Property(e => e.SpecificationsJson);
-            entity.Property(e => e.RawHtml);
             entity.Property(e => e.SourceUrl).IsRequired().HasMaxLength(500);
 
             entity.HasIndex(e => e.LicensePlate).IsUnique();
