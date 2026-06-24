@@ -2,7 +2,7 @@
 
 A car budget tracking application built with .NET and React. Available as a Windows desktop app and a self-hosted Docker container.
 
-> **Latest release: v0.2.0** — [Download for Windows](https://github.com/niklas2233/car-budget-tracker/releases/latest) · [Docker Hub](https://hub.docker.com/r/niklas2233/car-budget-tracker)
+> [![Latest Release](https://img.shields.io/github/v/release/niklas2233/car-budget-tracker?label=latest+release)](https://github.com/niklas2233/car-budget-tracker/releases/latest) — [Download for Windows](https://github.com/niklas2233/car-budget-tracker/releases/latest) · [Docker Hub](https://hub.docker.com/r/niklas2233/car-budget-tracker)
 
 ## Features
 
